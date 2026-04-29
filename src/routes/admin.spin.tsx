@@ -5,7 +5,7 @@ import { AdminShell } from "@/components/AdminShell";
 
 export const Route = createFileRoute("/admin/spin")({
   head: () => ({ meta: [{ title: "Spin Rewards — Admin" }] }),
-  component: AdminSpin;
+  component: AdminSpin,
 });
 
 type Slice = { id: string; label: string; value: number; probability: number; color: string };
