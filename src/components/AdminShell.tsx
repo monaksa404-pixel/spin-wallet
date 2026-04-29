@@ -2,14 +2,14 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { LayoutDashboard, Users, ArrowDownToLine, ArrowUpFromLine, Disc3, Gift, Sparkles, LogOut, Bell } from "lucide-react";
 import type { ReactNode } from "react";
 
-const nav = [
+const nav: { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean }[] = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin/deposits", label: "Deposits", icon: ArrowDownToLine },
   { to: "/admin/withdrawals", label: "Withdrawals", icon: ArrowUpFromLine },
   { to: "/admin/spin", label: "Spin Rewards", icon: Disc3 },
   { to: "/admin/offers", label: "Offers", icon: Gift },
-] as const;
+];
 
 export function AdminShell({ title, children }: { title: string; children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
