@@ -39,7 +39,7 @@ function OffersPage() {
         <div className="space-y-3">
           {data.map((o, i) => (
             <div key={i} className="bg-gradient-card border border-border rounded-2xl p-4 relative overflow-hidden">
-              {"hot" in o && o.hot && (
+              {"hot" in o && (o as { hot: boolean }).hot && (
                 <span className="absolute top-3 right-3 flex items-center gap-1 text-xs font-bold text-destructive bg-destructive/15 px-2 py-1 rounded-md">
                   <Flame className="w-3 h-3" /> HOT
                 </span>

@@ -9,38 +9,234 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WithdrawRouteImport } from './routes/withdraw'
+import { Route as WalletRouteImport } from './routes/wallet'
+import { Route as SpinRouteImport } from './routes/spin'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as OffersRouteImport } from './routes/offers'
+import { Route as DepositRouteImport } from './routes/deposit'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WithdrawUsdtRouteImport } from './routes/withdraw.usdt'
+import { Route as WithdrawBankRouteImport } from './routes/withdraw.bank'
+import { Route as DepositUsdtRouteImport } from './routes/deposit.usdt'
+import { Route as DepositPendingRouteImport } from './routes/deposit.pending'
+import { Route as DepositGiftCardRouteImport } from './routes/deposit.gift-card'
+import { Route as DepositBankRouteImport } from './routes/deposit.bank'
 
+const WithdrawRoute = WithdrawRouteImport.update({
+  id: '/withdraw',
+  path: '/withdraw',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WalletRoute = WalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SpinRoute = SpinRouteImport.update({
+  id: '/spin',
+  path: '/spin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OffersRoute = OffersRouteImport.update({
+  id: '/offers',
+  path: '/offers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DepositRoute = DepositRouteImport.update({
+  id: '/deposit',
+  path: '/deposit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WithdrawUsdtRoute = WithdrawUsdtRouteImport.update({
+  id: '/usdt',
+  path: '/usdt',
+  getParentRoute: () => WithdrawRoute,
+} as any)
+const WithdrawBankRoute = WithdrawBankRouteImport.update({
+  id: '/bank',
+  path: '/bank',
+  getParentRoute: () => WithdrawRoute,
+} as any)
+const DepositUsdtRoute = DepositUsdtRouteImport.update({
+  id: '/usdt',
+  path: '/usdt',
+  getParentRoute: () => DepositRoute,
+} as any)
+const DepositPendingRoute = DepositPendingRouteImport.update({
+  id: '/pending',
+  path: '/pending',
+  getParentRoute: () => DepositRoute,
+} as any)
+const DepositGiftCardRoute = DepositGiftCardRouteImport.update({
+  id: '/gift-card',
+  path: '/gift-card',
+  getParentRoute: () => DepositRoute,
+} as any)
+const DepositBankRoute = DepositBankRouteImport.update({
+  id: '/bank',
+  path: '/bank',
+  getParentRoute: () => DepositRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/deposit': typeof DepositRouteWithChildren
+  '/offers': typeof OffersRoute
+  '/profile': typeof ProfileRoute
+  '/spin': typeof SpinRoute
+  '/wallet': typeof WalletRoute
+  '/withdraw': typeof WithdrawRouteWithChildren
+  '/deposit/bank': typeof DepositBankRoute
+  '/deposit/gift-card': typeof DepositGiftCardRoute
+  '/deposit/pending': typeof DepositPendingRoute
+  '/deposit/usdt': typeof DepositUsdtRoute
+  '/withdraw/bank': typeof WithdrawBankRoute
+  '/withdraw/usdt': typeof WithdrawUsdtRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/deposit': typeof DepositRouteWithChildren
+  '/offers': typeof OffersRoute
+  '/profile': typeof ProfileRoute
+  '/spin': typeof SpinRoute
+  '/wallet': typeof WalletRoute
+  '/withdraw': typeof WithdrawRouteWithChildren
+  '/deposit/bank': typeof DepositBankRoute
+  '/deposit/gift-card': typeof DepositGiftCardRoute
+  '/deposit/pending': typeof DepositPendingRoute
+  '/deposit/usdt': typeof DepositUsdtRoute
+  '/withdraw/bank': typeof WithdrawBankRoute
+  '/withdraw/usdt': typeof WithdrawUsdtRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/deposit': typeof DepositRouteWithChildren
+  '/offers': typeof OffersRoute
+  '/profile': typeof ProfileRoute
+  '/spin': typeof SpinRoute
+  '/wallet': typeof WalletRoute
+  '/withdraw': typeof WithdrawRouteWithChildren
+  '/deposit/bank': typeof DepositBankRoute
+  '/deposit/gift-card': typeof DepositGiftCardRoute
+  '/deposit/pending': typeof DepositPendingRoute
+  '/deposit/usdt': typeof DepositUsdtRoute
+  '/withdraw/bank': typeof WithdrawBankRoute
+  '/withdraw/usdt': typeof WithdrawUsdtRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/deposit'
+    | '/offers'
+    | '/profile'
+    | '/spin'
+    | '/wallet'
+    | '/withdraw'
+    | '/deposit/bank'
+    | '/deposit/gift-card'
+    | '/deposit/pending'
+    | '/deposit/usdt'
+    | '/withdraw/bank'
+    | '/withdraw/usdt'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/deposit'
+    | '/offers'
+    | '/profile'
+    | '/spin'
+    | '/wallet'
+    | '/withdraw'
+    | '/deposit/bank'
+    | '/deposit/gift-card'
+    | '/deposit/pending'
+    | '/deposit/usdt'
+    | '/withdraw/bank'
+    | '/withdraw/usdt'
+  id:
+    | '__root__'
+    | '/'
+    | '/deposit'
+    | '/offers'
+    | '/profile'
+    | '/spin'
+    | '/wallet'
+    | '/withdraw'
+    | '/deposit/bank'
+    | '/deposit/gift-card'
+    | '/deposit/pending'
+    | '/deposit/usdt'
+    | '/withdraw/bank'
+    | '/withdraw/usdt'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DepositRoute: typeof DepositRouteWithChildren
+  OffersRoute: typeof OffersRoute
+  ProfileRoute: typeof ProfileRoute
+  SpinRoute: typeof SpinRoute
+  WalletRoute: typeof WalletRoute
+  WithdrawRoute: typeof WithdrawRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/withdraw': {
+      id: '/withdraw'
+      path: '/withdraw'
+      fullPath: '/withdraw'
+      preLoaderRoute: typeof WithdrawRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/wallet': {
+      id: '/wallet'
+      path: '/wallet'
+      fullPath: '/wallet'
+      preLoaderRoute: typeof WalletRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/spin': {
+      id: '/spin'
+      path: '/spin'
+      fullPath: '/spin'
+      preLoaderRoute: typeof SpinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/offers': {
+      id: '/offers'
+      path: '/offers'
+      fullPath: '/offers'
+      preLoaderRoute: typeof OffersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/deposit': {
+      id: '/deposit'
+      path: '/deposit'
+      fullPath: '/deposit'
+      preLoaderRoute: typeof DepositRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +244,90 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/withdraw/usdt': {
+      id: '/withdraw/usdt'
+      path: '/usdt'
+      fullPath: '/withdraw/usdt'
+      preLoaderRoute: typeof WithdrawUsdtRouteImport
+      parentRoute: typeof WithdrawRoute
+    }
+    '/withdraw/bank': {
+      id: '/withdraw/bank'
+      path: '/bank'
+      fullPath: '/withdraw/bank'
+      preLoaderRoute: typeof WithdrawBankRouteImport
+      parentRoute: typeof WithdrawRoute
+    }
+    '/deposit/usdt': {
+      id: '/deposit/usdt'
+      path: '/usdt'
+      fullPath: '/deposit/usdt'
+      preLoaderRoute: typeof DepositUsdtRouteImport
+      parentRoute: typeof DepositRoute
+    }
+    '/deposit/pending': {
+      id: '/deposit/pending'
+      path: '/pending'
+      fullPath: '/deposit/pending'
+      preLoaderRoute: typeof DepositPendingRouteImport
+      parentRoute: typeof DepositRoute
+    }
+    '/deposit/gift-card': {
+      id: '/deposit/gift-card'
+      path: '/gift-card'
+      fullPath: '/deposit/gift-card'
+      preLoaderRoute: typeof DepositGiftCardRouteImport
+      parentRoute: typeof DepositRoute
+    }
+    '/deposit/bank': {
+      id: '/deposit/bank'
+      path: '/bank'
+      fullPath: '/deposit/bank'
+      preLoaderRoute: typeof DepositBankRouteImport
+      parentRoute: typeof DepositRoute
+    }
   }
 }
 
+interface DepositRouteChildren {
+  DepositBankRoute: typeof DepositBankRoute
+  DepositGiftCardRoute: typeof DepositGiftCardRoute
+  DepositPendingRoute: typeof DepositPendingRoute
+  DepositUsdtRoute: typeof DepositUsdtRoute
+}
+
+const DepositRouteChildren: DepositRouteChildren = {
+  DepositBankRoute: DepositBankRoute,
+  DepositGiftCardRoute: DepositGiftCardRoute,
+  DepositPendingRoute: DepositPendingRoute,
+  DepositUsdtRoute: DepositUsdtRoute,
+}
+
+const DepositRouteWithChildren =
+  DepositRoute._addFileChildren(DepositRouteChildren)
+
+interface WithdrawRouteChildren {
+  WithdrawBankRoute: typeof WithdrawBankRoute
+  WithdrawUsdtRoute: typeof WithdrawUsdtRoute
+}
+
+const WithdrawRouteChildren: WithdrawRouteChildren = {
+  WithdrawBankRoute: WithdrawBankRoute,
+  WithdrawUsdtRoute: WithdrawUsdtRoute,
+}
+
+const WithdrawRouteWithChildren = WithdrawRoute._addFileChildren(
+  WithdrawRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DepositRoute: DepositRouteWithChildren,
+  OffersRoute: OffersRoute,
+  ProfileRoute: ProfileRoute,
+  SpinRoute: SpinRoute,
+  WalletRoute: WalletRoute,
+  WithdrawRoute: WithdrawRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
