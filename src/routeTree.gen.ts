@@ -12,9 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WithdrawRouteImport } from './routes/withdraw'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as SpinRouteImport } from './routes/spin'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as OffersRouteImport } from './routes/offers'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as DepositRouteImport } from './routes/deposit'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WithdrawUsdtRouteImport } from './routes/withdraw.usdt'
 import { Route as WithdrawBankRouteImport } from './routes/withdraw.bank'
@@ -22,6 +25,11 @@ import { Route as DepositUsdtRouteImport } from './routes/deposit.usdt'
 import { Route as DepositPendingRouteImport } from './routes/deposit.pending'
 import { Route as DepositGiftCardRouteImport } from './routes/deposit.gift-card'
 import { Route as DepositBankRouteImport } from './routes/deposit.bank'
+import { Route as AdminWithdrawalsRouteImport } from './routes/admin.withdrawals'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminSpinRouteImport } from './routes/admin.spin'
+import { Route as AdminOffersRouteImport } from './routes/admin.offers'
+import { Route as AdminDepositsRouteImport } from './routes/admin.deposits'
 
 const WithdrawRoute = WithdrawRouteImport.update({
   id: '/withdraw',
@@ -38,6 +46,11 @@ const SpinRoute = SpinRouteImport.update({
   path: '/spin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -48,9 +61,19 @@ const OffersRoute = OffersRouteImport.update({
   path: '/offers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DepositRoute = DepositRouteImport.update({
   id: '/deposit',
   path: '/deposit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -88,15 +111,48 @@ const DepositBankRoute = DepositBankRouteImport.update({
   path: '/bank',
   getParentRoute: () => DepositRoute,
 } as any)
+const AdminWithdrawalsRoute = AdminWithdrawalsRouteImport.update({
+  id: '/withdrawals',
+  path: '/withdrawals',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSpinRoute = AdminSpinRouteImport.update({
+  id: '/spin',
+  path: '/spin',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminOffersRoute = AdminOffersRouteImport.update({
+  id: '/offers',
+  path: '/offers',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDepositsRoute = AdminDepositsRouteImport.update({
+  id: '/deposits',
+  path: '/deposits',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/deposit': typeof DepositRouteWithChildren
+  '/login': typeof LoginRoute
   '/offers': typeof OffersRoute
   '/profile': typeof ProfileRoute
+  '/signup': typeof SignupRoute
   '/spin': typeof SpinRoute
   '/wallet': typeof WalletRoute
   '/withdraw': typeof WithdrawRouteWithChildren
+  '/admin/deposits': typeof AdminDepositsRoute
+  '/admin/offers': typeof AdminOffersRoute
+  '/admin/spin': typeof AdminSpinRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/admin/withdrawals': typeof AdminWithdrawalsRoute
   '/deposit/bank': typeof DepositBankRoute
   '/deposit/gift-card': typeof DepositGiftCardRoute
   '/deposit/pending': typeof DepositPendingRoute
@@ -106,12 +162,20 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/deposit': typeof DepositRouteWithChildren
+  '/login': typeof LoginRoute
   '/offers': typeof OffersRoute
   '/profile': typeof ProfileRoute
+  '/signup': typeof SignupRoute
   '/spin': typeof SpinRoute
   '/wallet': typeof WalletRoute
   '/withdraw': typeof WithdrawRouteWithChildren
+  '/admin/deposits': typeof AdminDepositsRoute
+  '/admin/offers': typeof AdminOffersRoute
+  '/admin/spin': typeof AdminSpinRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/admin/withdrawals': typeof AdminWithdrawalsRoute
   '/deposit/bank': typeof DepositBankRoute
   '/deposit/gift-card': typeof DepositGiftCardRoute
   '/deposit/pending': typeof DepositPendingRoute
@@ -122,12 +186,20 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/deposit': typeof DepositRouteWithChildren
+  '/login': typeof LoginRoute
   '/offers': typeof OffersRoute
   '/profile': typeof ProfileRoute
+  '/signup': typeof SignupRoute
   '/spin': typeof SpinRoute
   '/wallet': typeof WalletRoute
   '/withdraw': typeof WithdrawRouteWithChildren
+  '/admin/deposits': typeof AdminDepositsRoute
+  '/admin/offers': typeof AdminOffersRoute
+  '/admin/spin': typeof AdminSpinRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/admin/withdrawals': typeof AdminWithdrawalsRoute
   '/deposit/bank': typeof DepositBankRoute
   '/deposit/gift-card': typeof DepositGiftCardRoute
   '/deposit/pending': typeof DepositPendingRoute
@@ -139,12 +211,20 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/deposit'
+    | '/login'
     | '/offers'
     | '/profile'
+    | '/signup'
     | '/spin'
     | '/wallet'
     | '/withdraw'
+    | '/admin/deposits'
+    | '/admin/offers'
+    | '/admin/spin'
+    | '/admin/users'
+    | '/admin/withdrawals'
     | '/deposit/bank'
     | '/deposit/gift-card'
     | '/deposit/pending'
@@ -154,12 +234,20 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/deposit'
+    | '/login'
     | '/offers'
     | '/profile'
+    | '/signup'
     | '/spin'
     | '/wallet'
     | '/withdraw'
+    | '/admin/deposits'
+    | '/admin/offers'
+    | '/admin/spin'
+    | '/admin/users'
+    | '/admin/withdrawals'
     | '/deposit/bank'
     | '/deposit/gift-card'
     | '/deposit/pending'
@@ -169,12 +257,20 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/deposit'
+    | '/login'
     | '/offers'
     | '/profile'
+    | '/signup'
     | '/spin'
     | '/wallet'
     | '/withdraw'
+    | '/admin/deposits'
+    | '/admin/offers'
+    | '/admin/spin'
+    | '/admin/users'
+    | '/admin/withdrawals'
     | '/deposit/bank'
     | '/deposit/gift-card'
     | '/deposit/pending'
@@ -185,9 +281,12 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   DepositRoute: typeof DepositRouteWithChildren
+  LoginRoute: typeof LoginRoute
   OffersRoute: typeof OffersRoute
   ProfileRoute: typeof ProfileRoute
+  SignupRoute: typeof SignupRoute
   SpinRoute: typeof SpinRoute
   WalletRoute: typeof WalletRoute
   WithdrawRoute: typeof WithdrawRouteWithChildren
@@ -216,6 +315,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SpinRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
@@ -230,11 +336,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OffersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/deposit': {
       id: '/deposit'
       path: '/deposit'
       fullPath: '/deposit'
       preLoaderRoute: typeof DepositRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -286,8 +406,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DepositBankRouteImport
       parentRoute: typeof DepositRoute
     }
+    '/admin/withdrawals': {
+      id: '/admin/withdrawals'
+      path: '/withdrawals'
+      fullPath: '/admin/withdrawals'
+      preLoaderRoute: typeof AdminWithdrawalsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/spin': {
+      id: '/admin/spin'
+      path: '/spin'
+      fullPath: '/admin/spin'
+      preLoaderRoute: typeof AdminSpinRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/offers': {
+      id: '/admin/offers'
+      path: '/offers'
+      fullPath: '/admin/offers'
+      preLoaderRoute: typeof AdminOffersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/deposits': {
+      id: '/admin/deposits'
+      path: '/deposits'
+      fullPath: '/admin/deposits'
+      preLoaderRoute: typeof AdminDepositsRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
+
+interface AdminRouteChildren {
+  AdminDepositsRoute: typeof AdminDepositsRoute
+  AdminOffersRoute: typeof AdminOffersRoute
+  AdminSpinRoute: typeof AdminSpinRoute
+  AdminUsersRoute: typeof AdminUsersRoute
+  AdminWithdrawalsRoute: typeof AdminWithdrawalsRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminDepositsRoute: AdminDepositsRoute,
+  AdminOffersRoute: AdminOffersRoute,
+  AdminSpinRoute: AdminSpinRoute,
+  AdminUsersRoute: AdminUsersRoute,
+  AdminWithdrawalsRoute: AdminWithdrawalsRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface DepositRouteChildren {
   DepositBankRoute: typeof DepositBankRoute
@@ -322,9 +495,12 @@ const WithdrawRouteWithChildren = WithdrawRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   DepositRoute: DepositRouteWithChildren,
+  LoginRoute: LoginRoute,
   OffersRoute: OffersRoute,
   ProfileRoute: ProfileRoute,
+  SignupRoute: SignupRoute,
   SpinRoute: SpinRoute,
   WalletRoute: WalletRoute,
   WithdrawRoute: WithdrawRouteWithChildren,
@@ -332,12 +508,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
