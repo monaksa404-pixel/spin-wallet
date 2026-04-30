@@ -28,10 +28,10 @@ function BankWithdraw() {
     const { error } = await supabase.rpc("request_withdrawal", {
       _method: "bank",
       _amount: amt,
-      _usdt_address: null,
+      _usdt_address: "",
       _account_name: form.name.trim(),
       _account_number: form.number.trim(),
-      _iban: form.iban.trim() || null,
+      _iban: form.iban.trim(),
       _bank_name: form.bank,
     });
     setBusy(false);

@@ -30,10 +30,10 @@ function WithdrawUsdt() {
       _method: "usdt",
       _amount: amt,
       _usdt_address: address.trim(),
-      _account_name: null,
-      _account_number: null,
-      _iban: null,
-      _bank_name: null,
+      _account_name: "",
+      _account_number: "",
+      _iban: "",
+      _bank_name: "",
     });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
