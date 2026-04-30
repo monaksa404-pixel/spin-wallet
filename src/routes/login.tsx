@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Mail, Lock, Eye, EyeOff, Sparkles } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Login — GameBonus" }] }),
@@ -10,13 +12,28 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const [show, setShow] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
+  const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Frontend-only stub; backend wires later
-    if (form.email === "admin@gamebonus.app") navigate({ to: "/admin" });
-    else navigate({ to: "/" });
+    setBusy(true);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: form.email.trim(),
+      password: form.password,
+    });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    // Check role
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.user!.id);
+    const isAdmin = (roles ?? []).some((r) => r.role === "admin");
+    navigate({ to: isAdmin ? "/admin" : "/" });
   };
 
   return (
@@ -51,19 +68,10 @@ function LoginPage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-xs">
-            <label className="flex items-center gap-2 text-muted-foreground"><input type="checkbox" className="accent-primary" /> Remember me</label>
-            <button type="button" className="text-primary-glow">Forgot password?</button>
-          </div>
-
-          <button type="submit" className="w-full bg-gradient-primary py-4 rounded-xl font-semibold shadow-glow">Sign In</button>
+          <button disabled={busy} type="submit" className="w-full bg-gradient-primary py-4 rounded-xl font-semibold shadow-glow disabled:opacity-60">
+            {busy ? "Signing in..." : "Sign In"}
+          </button>
         </form>
-
-        <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
-          <div className="h-px bg-border flex-1" /> OR <div className="h-px bg-border flex-1" />
-        </div>
-
-        <button className="w-full bg-card border border-border rounded-xl py-3 text-sm font-medium hover:border-primary transition">Continue with Google</button>
 
         <p className="text-center text-sm text-muted-foreground mt-8">
           Don't have an account? <Link to="/signup" className="text-primary-glow font-semibold">Sign up</Link>
