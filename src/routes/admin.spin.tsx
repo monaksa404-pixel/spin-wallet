@@ -1,74 +1,85 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { Plus, Trash2, Save } from "lucide-react";
-import { AdminShell } from "@/components/AdminShell";
+import { useEffect, useState } from "react";
+import { Check, X } from "lucide-react";
+import { AdminShell, StatusPill } from "@/components/AdminShell";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/spin")({
   head: () => ({ meta: [{ title: "Spin Rewards — Admin" }] }),
   component: AdminSpin,
 });
 
-type Slice = { id: string; label: string; value: number; probability: number; color: string };
-
-const seed: Slice[] = [
-  { id: "1", label: "$5", value: 5, probability: 30, color: "#a855f7" },
-  { id: "2", label: "$10", value: 10, probability: 20, color: "#7c3aed" },
-  { id: "3", label: "$25", value: 25, probability: 15, color: "#ec4899" },
-  { id: "4", label: "$50", value: 50, probability: 10, color: "#f59e0b" },
-  { id: "5", label: "$100", value: 100, probability: 5, color: "#10b981" },
-  { id: "6", label: "Try Again", value: 0, probability: 20, color: "#475569" },
-];
+type Row = {
+  id: string; prize_label: string; prize_kind: string; prize_value: number;
+  balance_at_spin: number; computed_amount: number; status: string; created_at: string;
+  profiles: { full_name: string | null } | null;
+};
 
 function AdminSpin() {
-  const [slices, setSlices] = useState<Slice[]>(seed);
-  const total = slices.reduce((s, x) => s + x.probability, 0);
+  const [rows, setRows] = useState<Row[]>([]);
+  const [tab, setTab] = useState<"All" | "pending" | "approved" | "rejected">("pending");
 
-  const update = (id: string, patch: Partial<Slice>) => setSlices(slices.map((s) => (s.id === id ? { ...s, ...patch } : s)));
-  const remove = (id: string) => setSlices(slices.filter((s) => s.id !== id));
-  const add = () => setSlices([...slices, { id: String(Date.now()), label: "New", value: 0, probability: 5, color: "#a855f7" }]);
+  const load = async () => {
+    const { data } = await supabase.from("spin_rewards").select("*, profiles(full_name)").order("created_at", { ascending: false });
+    setRows((data ?? []) as any);
+  };
+  useEffect(() => {
+    load();
+    const ch = supabase.channel("admin-spin").on("postgres_changes", { event: "*", schema: "public", table: "spin_rewards" }, load).subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
+
+  const filtered = rows.filter((r) => tab === "All" || r.status === tab);
+  const approve = async (id: string) => {
+    const { error } = await supabase.rpc("approve_spin", { _id: id });
+    if (error) toast.error(error.message); else toast.success("Approved");
+  };
+  const reject = async (id: string) => {
+    const { error } = await supabase.rpc("reject_spin", { _id: id });
+    if (error) toast.error(error.message); else toast.success("Rejected");
+  };
 
   return (
     <AdminShell title="Spin Wheel Rewards">
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-muted-foreground">Configure prize slices and win probabilities. Total probability should equal <span className={total === 100 ? "text-success" : "text-warning"}>100%</span> (current: {total}%).</p>
-        <div className="flex gap-2">
-          <button onClick={add} className="bg-card border border-border px-3 py-2 rounded-xl text-sm flex items-center gap-2 hover:border-primary"><Plus className="w-4 h-4" /> Add Slice</button>
-          <button className="bg-gradient-primary px-4 py-2 rounded-xl text-sm font-semibold shadow-glow flex items-center gap-2"><Save className="w-4 h-4" /> Save</button>
-        </div>
+      <div className="flex items-center gap-2 mb-4 flex-wrap">
+        {(["pending", "approved", "rejected", "All"] as const).map((t) => (
+          <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-xl text-sm font-medium capitalize transition ${tab === t ? "bg-gradient-primary shadow-glow" : "bg-card border border-border text-muted-foreground hover:text-foreground"}`}>
+            {t} <span className="ml-1 text-xs opacity-70">({rows.filter((r) => t === "All" || r.status === t).length})</span>
+          </button>
+        ))}
       </div>
-
-      <div className="bg-card border border-border rounded-2xl overflow-hidden">
+      <div className="bg-card border border-border rounded-2xl overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-muted/40 text-xs text-muted-foreground">
             <tr>
-              <th className="text-left px-4 py-3">Color</th>
-              <th className="text-left px-4 py-3">Label</th>
-              <th className="text-left px-4 py-3">Value (USD)</th>
-              <th className="text-left px-4 py-3">Probability (%)</th>
-              <th className="px-4 py-3" />
+              <th className="text-left px-4 py-3">User</th>
+              <th className="text-left px-4 py-3">Prize</th>
+              <th className="text-left px-4 py-3">Balance @ spin</th>
+              <th className="text-left px-4 py-3">Computed reward</th>
+              <th className="text-left px-4 py-3">Status</th>
+              <th className="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {slices.map((s) => (
-              <tr key={s.id}>
+            {filtered.map((r) => (
+              <tr key={r.id}>
+                <td className="px-4 py-3 font-medium">{r.profiles?.full_name ?? "—"}</td>
+                <td className="px-4 py-3 font-bold text-primary-glow">{r.prize_label}</td>
+                <td className="px-4 py-3">${Number(r.balance_at_spin).toFixed(2)}</td>
+                <td className="px-4 py-3 font-semibold">${Number(r.computed_amount).toFixed(2)}</td>
+                <td className="px-4 py-3"><StatusPill status={r.status} /></td>
                 <td className="px-4 py-3">
-                  <input type="color" value={s.color} onChange={(e) => update(s.id, { color: e.target.value })} className="w-10 h-8 rounded bg-transparent" />
-                </td>
-                <td className="px-4 py-3"><input value={s.label} onChange={(e) => update(s.id, { label: e.target.value })} className="bg-input border border-border rounded-lg px-3 py-1.5 outline-none focus:border-primary w-32" /></td>
-                <td className="px-4 py-3"><input type="number" value={s.value} onChange={(e) => update(s.id, { value: Number(e.target.value) })} className="bg-input border border-border rounded-lg px-3 py-1.5 outline-none focus:border-primary w-24" /></td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <input type="number" value={s.probability} onChange={(e) => update(s.id, { probability: Number(e.target.value) })} className="bg-input border border-border rounded-lg px-3 py-1.5 outline-none focus:border-primary w-20" />
-                    <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden max-w-[120px]">
-                      <div className="h-full bg-gradient-primary" style={{ width: `${s.probability}%` }} />
+                  {r.status === "pending" && (
+                    <div className="flex items-center gap-1 justify-end">
+                      <button onClick={() => approve(r.id)} className="p-1.5 rounded-lg bg-success/15 text-success hover:bg-success/25"><Check className="w-4 h-4" /></button>
+                      <button onClick={() => reject(r.id)} className="p-1.5 rounded-lg bg-destructive/15 text-destructive hover:bg-destructive/25"><X className="w-4 h-4" /></button>
                     </div>
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <button onClick={() => remove(s.id)} className="p-1.5 rounded-lg bg-destructive/15 text-destructive hover:bg-destructive/25"><Trash2 className="w-4 h-4" /></button>
+                  )}
                 </td>
               </tr>
             ))}
+            {filtered.length === 0 && <tr><td colSpan={6} className="text-center py-10 text-muted-foreground text-sm">No spins</td></tr>}
           </tbody>
         </table>
       </div>

@@ -1,7 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ChevronRight, Settings, User, Shield, Landmark, History, HelpCircle, LogOut, Wallet } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
-import { PageHeader } from "@/components/PageHeader";
+import { useAuth } from "@/hooks/useAuth";
+import { useWallet } from "@/hooks/useWallet";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({ meta: [{ title: "Profile — GameBonus" }] }),
@@ -17,6 +18,15 @@ const items = [
 ];
 
 function ProfilePage() {
+  const { user, signOut } = useAuth();
+  const { wallet } = useWallet(user?.id);
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate({ to: "/login" });
+  };
+
   return (
     <MobileShell>
       <header className="flex items-center justify-between px-4 py-4 border-b border-border">
@@ -29,10 +39,10 @@ function ProfilePage() {
           <div className="w-16 h-16 rounded-full bg-gradient-primary flex items-center justify-center shadow-glow">
             <User className="w-8 h-8" />
           </div>
-          <div>
-            <p className="text-xl font-bold">John Doe</p>
-            <p className="text-xs text-muted-foreground">john.doe@email.com</p>
-            <p className="text-xs text-muted-foreground">User ID: GB123456</p>
+          <div className="min-w-0">
+            <p className="text-xl font-bold truncate">{user?.user_metadata?.full_name ?? user?.email ?? "Guest"}</p>
+            <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+            <p className="text-xs text-muted-foreground font-mono">{user?.id.slice(0, 8)}</p>
           </div>
         </div>
 
@@ -41,7 +51,7 @@ function ProfilePage() {
             <Wallet className="w-6 h-6 text-primary-glow" />
             <div>
               <p className="text-xs text-muted-foreground">Total Balance</p>
-              <p className="text-xl font-bold">$653.00</p>
+              <p className="text-xl font-bold">${(wallet?.balance ?? 0).toFixed(2)}</p>
             </div>
           </div>
           <ChevronRight className="w-5 h-5 text-muted-foreground" />
@@ -64,7 +74,7 @@ function ProfilePage() {
               <button key={it.label} className="w-full flex items-center justify-between p-3 hover:bg-card-elevated transition">{inner}</button>
             );
           })}
-          <button className="w-full flex items-center justify-between p-3 text-destructive">
+          <button onClick={handleLogout} className="w-full flex items-center justify-between p-3 text-destructive">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-destructive/15 flex items-center justify-center"><LogOut className="w-4 h-4" /></div>
               <span className="text-sm font-medium">Logout</span>

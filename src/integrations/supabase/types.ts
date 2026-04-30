@@ -14,16 +14,285 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      deposits: {
+        Row: {
+          admin_note: string | null
+          amount: number | null
+          created_at: string
+          gift_card_brand: string | null
+          gift_card_code: string | null
+          id: string
+          method: Database["public"]["Enums"]["deposit_method"]
+          requested_amount: number | null
+          reviewed_at: string | null
+          status: Database["public"]["Enums"]["request_status"]
+          usdt_tx_address: string | null
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          amount?: number | null
+          created_at?: string
+          gift_card_brand?: string | null
+          gift_card_code?: string | null
+          id?: string
+          method: Database["public"]["Enums"]["deposit_method"]
+          requested_amount?: number | null
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["request_status"]
+          usdt_tx_address?: string | null
+          user_id: string
+        }
+        Update: {
+          admin_note?: string | null
+          amount?: number | null
+          created_at?: string
+          gift_card_brand?: string | null
+          gift_card_code?: string | null
+          id?: string
+          method?: Database["public"]["Enums"]["deposit_method"]
+          requested_amount?: number | null
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["request_status"]
+          usdt_tx_address?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      spin_rewards: {
+        Row: {
+          balance_at_spin: number
+          computed_amount: number
+          created_at: string
+          id: string
+          prize_kind: string
+          prize_label: string
+          prize_value: number
+          reviewed_at: string | null
+          status: Database["public"]["Enums"]["request_status"]
+          user_id: string
+        }
+        Insert: {
+          balance_at_spin: number
+          computed_amount: number
+          created_at?: string
+          id?: string
+          prize_kind: string
+          prize_label: string
+          prize_value: number
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["request_status"]
+          user_id: string
+        }
+        Update: {
+          balance_at_spin?: number
+          computed_amount?: number
+          created_at?: string
+          id?: string
+          prize_kind?: string
+          prize_label?: string
+          prize_value?: number
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["request_status"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          kind: string
+          ref_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          kind: string
+          ref_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          kind?: string
+          ref_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallets: {
+        Row: {
+          balance: number
+          bonus_balance: number
+          pending_balance: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          bonus_balance?: number
+          pending_balance?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          bonus_balance?: number
+          pending_balance?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      withdrawals: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          admin_note: string | null
+          amount: number
+          bank_name: string | null
+          created_at: string
+          iban: string | null
+          id: string
+          method: Database["public"]["Enums"]["withdraw_method"]
+          reviewed_at: string | null
+          status: Database["public"]["Enums"]["request_status"]
+          usdt_address: string | null
+          user_id: string
+        }
+        Insert: {
+          account_name?: string | null
+          account_number?: string | null
+          admin_note?: string | null
+          amount: number
+          bank_name?: string | null
+          created_at?: string
+          iban?: string | null
+          id?: string
+          method: Database["public"]["Enums"]["withdraw_method"]
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["request_status"]
+          usdt_address?: string | null
+          user_id: string
+        }
+        Update: {
+          account_name?: string | null
+          account_number?: string | null
+          admin_note?: string | null
+          amount?: number
+          bank_name?: string | null
+          created_at?: string
+          iban?: string | null
+          id?: string
+          method?: Database["public"]["Enums"]["withdraw_method"]
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["request_status"]
+          usdt_address?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      approve_deposit: {
+        Args: { _amount: number; _id: string }
+        Returns: undefined
+      }
+      approve_spin: { Args: { _id: string }; Returns: undefined }
+      approve_withdrawal: { Args: { _id: string }; Returns: undefined }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      reject_deposit: {
+        Args: { _id: string; _note: string }
+        Returns: undefined
+      }
+      reject_spin: { Args: { _id: string }; Returns: undefined }
+      reject_withdrawal: {
+        Args: { _id: string; _note: string }
+        Returns: undefined
+      }
+      request_withdrawal: {
+        Args: {
+          _account_name: string
+          _account_number: string
+          _amount: number
+          _bank_name: string
+          _iban: string
+          _method: Database["public"]["Enums"]["withdraw_method"]
+          _usdt_address: string
+        }
+        Returns: string
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
+      deposit_method: "gift_card" | "usdt" | "bank"
+      request_status: "pending" | "approved" | "rejected"
+      withdraw_method: "usdt" | "bank"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +419,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+      deposit_method: ["gift_card", "usdt", "bank"],
+      request_status: ["pending", "approved", "rejected"],
+      withdraw_method: ["usdt", "bank"],
+    },
   },
 } as const

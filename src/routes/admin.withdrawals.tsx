@@ -1,32 +1,55 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { Check, X, Eye } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Check, X } from "lucide-react";
 import { AdminShell, StatusPill } from "@/components/AdminShell";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/withdrawals")({
   head: () => ({ meta: [{ title: "Withdrawals — Admin" }] }),
   component: AdminWithdrawals,
 });
 
-type Status = "Pending" | "Approved" | "Rejected";
-const initial: { id: string; user: string; method: string; amount: string; dest: string; time: string; status: Status }[] = [
-  { id: "W-1099", user: "Omar Z.", method: "USDT (TRC20)", amount: "$1200.00", dest: "TVu...7uZv", time: "5m ago", status: "Pending" },
-  { id: "W-1098", user: "Nora F.", method: "Al Rajhi Bank", amount: "$1500.00", dest: "SA12 ... 9012", time: "30m ago", status: "Approved" },
-  { id: "W-1097", user: "Khalid M.", method: "USDT (TRC20)", amount: "$2000.00", dest: "TXf...09KK", time: "1h ago", status: "Pending" },
-  { id: "W-1096", user: "Fatima S.", method: "Al Rajhi Bank", amount: "$800.00", dest: "SA98 ... 4471", time: "3h ago", status: "Rejected" },
-];
+type Status = "pending" | "approved" | "rejected";
+type Row = {
+  id: string; method: string; amount: number; status: Status; created_at: string;
+  usdt_address: string | null; account_name: string | null; account_number: string | null; iban: string | null; bank_name: string | null;
+  profiles: { full_name: string | null } | null;
+};
 
 function AdminWithdrawals() {
-  const [rows, setRows] = useState(initial);
-  const [tab, setTab] = useState<"All" | Status>("Pending");
+  const [rows, setRows] = useState<Row[]>([]);
+  const [tab, setTab] = useState<"All" | Status>("pending");
+
+  const load = async () => {
+    const { data } = await supabase.from("withdrawals").select("*, profiles(full_name)").order("created_at", { ascending: false });
+    setRows((data ?? []) as any);
+  };
+  useEffect(() => {
+    load();
+    const ch = supabase.channel("admin-wd")
+      .on("postgres_changes", { event: "*", schema: "public", table: "withdrawals" }, load)
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
+
   const filtered = rows.filter((r) => tab === "All" || r.status === tab);
-  const setStatus = (id: string, s: Status) => setRows(rows.map((r) => (r.id === id ? { ...r, status: s } : r)));
+
+  const approve = async (id: string) => {
+    const { error } = await supabase.rpc("approve_withdrawal", { _id: id });
+    if (error) toast.error(error.message); else toast.success("Withdrawal approved");
+  };
+  const reject = async (id: string) => {
+    const note = window.prompt("Rejection reason (optional)") ?? "";
+    const { error } = await supabase.rpc("reject_withdrawal", { _id: id, _note: note });
+    if (error) toast.error(error.message); else toast.success("Rejected & refunded");
+  };
 
   return (
     <AdminShell title="Withdrawal Requests">
       <div className="flex items-center gap-2 mb-4 flex-wrap">
-        {(["Pending", "Approved", "Rejected", "All"] as const).map((t) => (
-          <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-xl text-sm font-medium transition ${tab === t ? "bg-gradient-primary shadow-glow" : "bg-card border border-border text-muted-foreground hover:text-foreground"}`}>
+        {(["pending", "approved", "rejected", "All"] as const).map((t) => (
+          <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-xl text-sm font-medium capitalize transition ${tab === t ? "bg-gradient-primary shadow-glow" : "bg-card border border-border text-muted-foreground hover:text-foreground"}`}>
             {t} <span className="ml-1 text-xs opacity-70">({rows.filter((r) => t === "All" || r.status === t).length})</span>
           </button>
         ))}
@@ -37,12 +60,10 @@ function AdminWithdrawals() {
           <table className="w-full text-sm">
             <thead className="bg-muted/40 text-xs text-muted-foreground">
               <tr>
-                <th className="text-left px-4 py-3">ID</th>
                 <th className="text-left px-4 py-3">User</th>
                 <th className="text-left px-4 py-3">Method</th>
                 <th className="text-left px-4 py-3">Amount</th>
                 <th className="text-left px-4 py-3">Destination</th>
-                <th className="text-left px-4 py-3">Time</th>
                 <th className="text-left px-4 py-3">Status</th>
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
@@ -50,28 +71,25 @@ function AdminWithdrawals() {
             <tbody className="divide-y divide-border">
               {filtered.map((r) => (
                 <tr key={r.id} className="hover:bg-card-elevated/40">
-                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{r.id}</td>
-                  <td className="px-4 py-3 font-medium">{r.user}</td>
-                  <td className="px-4 py-3">{r.method}</td>
-                  <td className="px-4 py-3 font-semibold">{r.amount}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{r.dest}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{r.time}</td>
+                  <td className="px-4 py-3 font-medium">{r.profiles?.full_name ?? "—"}</td>
+                  <td className="px-4 py-3 capitalize">{r.method}</td>
+                  <td className="px-4 py-3 font-semibold">${Number(r.amount).toFixed(2)}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground max-w-[260px] truncate">
+                    {r.method === "usdt" ? r.usdt_address : `${r.account_name} · ${r.bank_name} · ${r.account_number}${r.iban ? " · " + r.iban : ""}`}
+                  </td>
                   <td className="px-4 py-3"><StatusPill status={r.status} /></td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-1 justify-end">
-                      <button className="p-1.5 rounded-lg hover:bg-muted" title="View"><Eye className="w-4 h-4" /></button>
-                      {r.status === "Pending" && (
-                        <>
-                          <button onClick={() => setStatus(r.id, "Approved")} className="p-1.5 rounded-lg bg-success/15 text-success hover:bg-success/25" title="Approve"><Check className="w-4 h-4" /></button>
-                          <button onClick={() => setStatus(r.id, "Rejected")} className="p-1.5 rounded-lg bg-destructive/15 text-destructive hover:bg-destructive/25" title="Reject"><X className="w-4 h-4" /></button>
-                        </>
-                      )}
-                    </div>
+                    {r.status === "pending" && (
+                      <div className="flex items-center gap-1 justify-end">
+                        <button onClick={() => approve(r.id)} className="p-1.5 rounded-lg bg-success/15 text-success hover:bg-success/25"><Check className="w-4 h-4" /></button>
+                        <button onClick={() => reject(r.id)} className="p-1.5 rounded-lg bg-destructive/15 text-destructive hover:bg-destructive/25"><X className="w-4 h-4" /></button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={8} className="text-center py-10 text-muted-foreground text-sm">No requests in this tab</td></tr>
+                <tr><td colSpan={6} className="text-center py-10 text-muted-foreground text-sm">No requests</td></tr>
               )}
             </tbody>
           </table>
