@@ -3,14 +3,14 @@ import { useState } from "react";
 import { Info, ChevronLeft, ChevronRight } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { PageHeader, StepIndicator } from "@/components/PageHeader";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/deposit/gift-card")({
   head: () => ({ meta: [{ title: "Gift Card Deposit — GameBonus" }] }),
   component: GiftCardDeposit,
 });
 
-// Drop card images into public/images/cards/ — filenames referenced via `image` field.
-// Add up to ~20 entries; carousel shows 5 at a time with arrows.
 type Card = { id: string; name: string; image?: string; bg: string };
 
 const cards: Card[] = [
@@ -32,13 +32,27 @@ function GiftCardDeposit() {
   const [selected, setSelected] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [page, setPage] = useState(0);
+  const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
 
   const totalPages = Math.max(1, Math.ceil(cards.length / PAGE));
   const visible = cards.slice(page * PAGE, page * PAGE + PAGE);
 
-  const submit = () => {
+  const submit = async () => {
     if (!selected || !code.trim()) return;
+    setBusy(true);
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) { toast.error("Please log in"); navigate({ to: "/login" }); return; }
+    const brand = cards.find((c) => c.id === selected)?.name ?? selected;
+    const { error } = await supabase.from("deposits").insert({
+      user_id: u.user.id,
+      method: "gift_card",
+      gift_card_brand: brand,
+      gift_card_code: code.trim(),
+    });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Submitted! Pending review.");
     navigate({ to: "/deposit/pending" });
   };
 
@@ -53,38 +67,20 @@ function GiftCardDeposit() {
             <p className="text-xs text-muted-foreground">{page + 1} / {totalPages}</p>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              disabled={page === 0}
-              className="w-8 h-12 rounded-lg bg-card border border-border flex items-center justify-center disabled:opacity-30 hover:border-primary transition shrink-0"
-              aria-label="Previous"
-            >
+            <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0} className="w-8 h-12 rounded-lg bg-card border border-border flex items-center justify-center disabled:opacity-30 hover:border-primary transition shrink-0" aria-label="Previous">
               <ChevronLeft className="w-4 h-4" />
             </button>
             <div className="grid grid-cols-5 gap-2 flex-1">
               {visible.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => setSelected(c.id)}
-                  className={`aspect-[3/4] rounded-xl overflow-hidden bg-gradient-to-br ${c.bg} flex items-center justify-center text-[10px] font-bold text-white p-1 text-center border-2 transition ${selected === c.id ? "border-primary-glow scale-105 shadow-glow" : "border-transparent"}`}
-                >
-                  {c.image ? (
-                    <img src={c.image} alt={c.name} className="w-full h-full object-cover" />
-                  ) : (
-                    c.name
-                  )}
+                <button key={c.id} onClick={() => setSelected(c.id)} className={`aspect-[3/4] rounded-xl overflow-hidden bg-gradient-to-br ${c.bg} flex items-center justify-center text-[10px] font-bold text-white p-1 text-center border-2 transition ${selected === c.id ? "border-primary-glow scale-105 shadow-glow" : "border-transparent"}`}>
+                  {c.image ? <img src={c.image} alt={c.name} className="w-full h-full object-cover" /> : c.name}
                 </button>
               ))}
               {Array.from({ length: PAGE - visible.length }).map((_, i) => (
                 <div key={`pad-${i}`} className="aspect-[3/4]" />
               ))}
             </div>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              disabled={page >= totalPages - 1}
-              className="w-8 h-12 rounded-lg bg-card border border-border flex items-center justify-center disabled:opacity-30 hover:border-primary transition shrink-0"
-              aria-label="Next"
-            >
+            <button onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} className="w-8 h-12 rounded-lg bg-card border border-border flex items-center justify-center disabled:opacity-30 hover:border-primary transition shrink-0" aria-label="Next">
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -92,21 +88,16 @@ function GiftCardDeposit() {
 
         <div>
           <label className="text-sm text-muted-foreground">Enter Gift Card Code</label>
-          <input
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            placeholder="Enter gift card code"
-            className="mt-2 w-full bg-input border border-border rounded-xl px-4 py-3 text-sm focus:border-primary outline-none"
-          />
+          <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="Enter gift card code" className="mt-2 w-full bg-input border border-border rounded-xl px-4 py-3 text-sm focus:border-primary outline-none" />
         </div>
 
         <div className="bg-card border border-border rounded-xl p-3 flex gap-2 text-xs text-muted-foreground">
           <Info className="w-4 h-4 text-primary-glow shrink-0 mt-0.5" />
-          <p>Please enter valid code. Code will be checked manually within 2 hours.</p>
+          <p>Code will be checked manually. Admin will set the value within 2 hours.</p>
         </div>
 
-        <button onClick={submit} disabled={!selected || !code.trim()} className="w-full bg-gradient-primary py-4 rounded-xl font-semibold shadow-glow disabled:opacity-50 disabled:shadow-none">
-          Submit
+        <button onClick={submit} disabled={!selected || !code.trim() || busy} className="w-full bg-gradient-primary py-4 rounded-xl font-semibold shadow-glow disabled:opacity-50 disabled:shadow-none">
+          {busy ? "Submitting..." : "Submit"}
         </button>
       </div>
     </MobileShell>
