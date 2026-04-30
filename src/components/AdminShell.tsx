@@ -1,6 +1,7 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { LayoutDashboard, Users, ArrowDownToLine, ArrowUpFromLine, Disc3, Gift, Sparkles, LogOut, Bell } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 const nav: { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean }[] = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -13,6 +14,20 @@ const nav: { to: string; label: string; icon: typeof LayoutDashboard; exact?: bo
 
 export function AdminShell({ title, children }: { title: string; children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { user, isAdmin, loading, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) navigate({ to: "/login" });
+    if (!loading && user && !isAdmin) navigate({ to: "/" });
+  }, [loading, user, isAdmin, navigate]);
+
+  const logout = async () => { await signOut(); navigate({ to: "/login" }); };
+
+  if (loading || !isAdmin) {
+    return <div className="min-h-screen flex items-center justify-center text-muted-foreground text-sm">Loading...</div>;
+  }
+
   return (
     <div className="min-h-screen bg-background flex">
       <aside className="hidden md:flex w-64 shrink-0 border-r border-border bg-card/40 flex-col">
@@ -38,9 +53,9 @@ export function AdminShell({ title, children }: { title: string; children: React
           })}
         </nav>
         <div className="p-3 border-t border-border">
-          <Link to="/login" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-card hover:text-foreground">
+          <button onClick={logout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-card hover:text-foreground">
             <LogOut className="w-4 h-4" /> Logout
-          </Link>
+          </button>
         </div>
       </aside>
       <main className="flex-1 min-w-0">
@@ -52,16 +67,15 @@ export function AdminShell({ title, children }: { title: string; children: React
               <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
             </button>
             <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-full bg-gradient-primary flex items-center justify-center text-sm font-bold">A</div>
+              <div className="w-9 h-9 rounded-full bg-gradient-primary flex items-center justify-center text-sm font-bold">{(user?.email ?? "A")[0].toUpperCase()}</div>
               <div className="hidden sm:block">
                 <p className="text-sm font-semibold">Admin</p>
-                <p className="text-[10px] text-muted-foreground">admin@gamebonus.app</p>
+                <p className="text-[10px] text-muted-foreground">{user?.email}</p>
               </div>
             </div>
           </div>
         </header>
-        <div className="p-6">{children}</div>
-        {/* Mobile bottom nav */}
+        <div className="p-6 pb-24 md:pb-6">{children}</div>
         <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur border-t border-border grid grid-cols-6">
           {nav.map((n) => {
             const active = n.exact ? pathname === n.to : pathname.startsWith(n.to);
@@ -89,13 +103,14 @@ export function StatCard({ label, value, sub, accent }: { label: string; value: 
   );
 }
 
-export function StatusPill({ status }: { status: "Pending" | "Approved" | "Rejected" | "Active" | "Banned" }) {
-  const map = {
-    Pending: "bg-warning/15 text-warning",
-    Approved: "bg-success/15 text-success",
-    Rejected: "bg-destructive/15 text-destructive",
-    Active: "bg-success/15 text-success",
-    Banned: "bg-destructive/15 text-destructive",
-  } as const;
-  return <span className={`px-2 py-0.5 rounded-md text-xs font-semibold ${map[status]}`}>{status}</span>;
+export function StatusPill({ status }: { status: string }) {
+  const map: Record<string, string> = {
+    pending: "bg-warning/15 text-warning",
+    approved: "bg-success/15 text-success",
+    rejected: "bg-destructive/15 text-destructive",
+    active: "bg-success/15 text-success",
+    banned: "bg-destructive/15 text-destructive",
+  };
+  const k = status.toLowerCase();
+  return <span className={`px-2 py-0.5 rounded-md text-xs font-semibold capitalize ${map[k] ?? "bg-muted/40"}`}>{status}</span>;
 }
