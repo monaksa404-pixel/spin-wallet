@@ -8,7 +8,7 @@ const nav: { to: string; label: string; icon: typeof LayoutDashboard; exact?: bo
   { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin/deposits", label: "Deposits", icon: ArrowDownToLine },
   { to: "/admin/withdrawals", label: "Withdrawals", icon: ArrowUpFromLine },
-  { to: "/admin/spin", label: "Spin Rewards", icon: Disc3 },
+  { to: "/admin/spin", label: "Game Rewards", icon: Disc3 },
   { to: "/admin/offers", label: "Offers", icon: Gift },
 ];
 
