@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Wallet as WalletIcon, Gift, ArrowDownToLine, ArrowUpFromLine, Sparkles } from "lucide-react";
+import { Wallet as WalletIcon, Gift, ArrowDownToLine, ArrowUpFromLine, Sparkles, Coins } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { PageHeader } from "@/components/PageHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { useWallet } from "@/hooks/useWallet";
+import { useCurrency } from "@/hooks/useCurrency";
+import { fmtCurrency } from "@/lib/games";
+import { CurrencySelect } from "@/components/CurrencySelect";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/wallet")({
@@ -19,6 +22,7 @@ const iconFor = (kind: string) => kind === "deposit" ? ArrowDownToLine : kind ==
 function WalletPage() {
   const { user } = useAuth();
   const { wallet } = useWallet(user?.id);
+  const { currency } = useCurrency();
   const [txs, setTxs] = useState<Tx[]>([]);
   const [filter, setFilter] = useState<"All" | "deposit" | "spin" | "withdrawal">("All");
 
@@ -41,20 +45,30 @@ function WalletPage() {
     <MobileShell>
       <PageHeader title="Wallet" />
       <div className="px-4 py-4 space-y-4">
+        <div className="flex justify-end"><CurrencySelect /></div>
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-gradient-card border border-border rounded-2xl p-4">
             <WalletIcon className="w-6 h-6 text-primary-glow mb-2" />
             <p className="text-xs text-muted-foreground">Total Balance</p>
-            <p className="text-2xl font-bold">${(wallet?.balance ?? 0).toFixed(2)}</p>
+            <p className="text-2xl font-bold">{fmtCurrency(wallet?.balance ?? 0, currency)}</p>
+            <p className="text-[10px] text-muted-foreground mt-1">${(wallet?.balance ?? 0).toFixed(2)} USDT</p>
           </div>
           <div className="bg-gradient-card border border-border rounded-2xl p-4">
             <Gift className="w-6 h-6 text-primary-glow mb-2" />
             <p className="text-xs text-muted-foreground">Bonus Balance</p>
-            <p className="text-2xl font-bold">${(wallet?.bonus_balance ?? 0).toFixed(2)}</p>
+            <p className="text-2xl font-bold">{fmtCurrency(wallet?.bonus_balance ?? 0, currency)}</p>
           </div>
         </div>
-        <div className="bg-card border border-border rounded-xl p-3 text-xs text-center text-muted-foreground">
-          Pending hold: <span className="text-warning font-semibold">${(wallet?.pending_balance ?? 0).toFixed(2)}</span>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-card border border-border rounded-2xl p-4">
+            <Coins className="w-6 h-6 text-warning mb-2" />
+            <p className="text-xs text-muted-foreground">Game Coins</p>
+            <p className="text-2xl font-bold">{Number(wallet?.coins ?? 0).toLocaleString()}</p>
+          </div>
+          <div className="bg-card border border-border rounded-2xl p-4">
+            <p className="text-xs text-muted-foreground">Pending hold</p>
+            <p className="text-2xl font-bold text-warning">{fmtCurrency(wallet?.pending_balance ?? 0, currency)}</p>
+          </div>
         </div>
 
         <div className="bg-card rounded-xl p-1 grid grid-cols-4 gap-1">
