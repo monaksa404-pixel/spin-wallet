@@ -89,8 +89,10 @@ export type Database = {
       spin_rewards: {
         Row: {
           balance_at_spin: number
+          bet_coins: number
           computed_amount: number
           created_at: string
+          game: string
           id: string
           prize_kind: string
           prize_label: string
@@ -101,8 +103,10 @@ export type Database = {
         }
         Insert: {
           balance_at_spin: number
+          bet_coins?: number
           computed_amount: number
           created_at?: string
+          game?: string
           id?: string
           prize_kind: string
           prize_label: string
@@ -113,8 +117,10 @@ export type Database = {
         }
         Update: {
           balance_at_spin?: number
+          bet_coins?: number
           computed_amount?: number
           created_at?: string
+          game?: string
           id?: string
           prize_kind?: string
           prize_label?: string
@@ -180,6 +186,7 @@ export type Database = {
         Row: {
           balance: number
           bonus_balance: number
+          coins: number
           pending_balance: number
           updated_at: string
           user_id: string
@@ -187,6 +194,7 @@ export type Database = {
         Insert: {
           balance?: number
           bonus_balance?: number
+          coins?: number
           pending_balance?: number
           updated_at?: string
           user_id: string
@@ -194,6 +202,7 @@ export type Database = {
         Update: {
           balance?: number
           bonus_balance?: number
+          coins?: number
           pending_balance?: number
           updated_at?: string
           user_id?: string
@@ -259,12 +268,24 @@ export type Database = {
       }
       approve_spin: { Args: { _id: string }; Returns: undefined }
       approve_withdrawal: { Args: { _id: string }; Returns: undefined }
+      convert_to_coins: { Args: { _usdt: number }; Returns: undefined }
+      convert_to_usdt: { Args: { _coins: number }; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      play_game: {
+        Args: {
+          _bet_coins: number
+          _game: string
+          _prize_kind: string
+          _prize_label: string
+          _prize_value: number
+        }
+        Returns: string
       }
       reject_deposit: {
         Args: { _id: string; _note: string }
