@@ -10,7 +10,7 @@ import { STANDARD_PRIZES } from "@/lib/games";
 
 export const Route = createFileRoute("/games/bonus-drop")({
   head: () => ({ meta: [{ title: "Bonus Drop — GameBonus" }] }),
-  component: BonusDrop;
+  component: BonusDrop,
 });
 
 function BonusDrop() {
