@@ -6,13 +6,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/spin")({
-  head: () => ({ meta: [{ title: "Spin Rewards — Admin" }] }),
+  head: () => ({ meta: [{ title: "Game Rewards — Admin" }] }),
   component: AdminSpin,
 });
 
 type Row = {
   id: string; prize_label: string; prize_kind: string; prize_value: number;
   balance_at_spin: number; computed_amount: number; status: string; created_at: string;
+  game: string | null; bet_coins: number | null;
   profiles: { full_name: string | null } | null;
 };
 
@@ -41,7 +42,7 @@ function AdminSpin() {
   };
 
   return (
-    <AdminShell title="Spin Wheel Rewards">
+    <AdminShell title="Game Rewards">
       <div className="flex items-center gap-2 mb-4 flex-wrap">
         {(["pending", "approved", "rejected", "All"] as const).map((t) => (
           <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-xl text-sm font-medium capitalize transition ${tab === t ? "bg-gradient-primary shadow-glow" : "bg-card border border-border text-muted-foreground hover:text-foreground"}`}>
@@ -54,9 +55,10 @@ function AdminSpin() {
           <thead className="bg-muted/40 text-xs text-muted-foreground">
             <tr>
               <th className="text-left px-4 py-3">User</th>
+              <th className="text-left px-4 py-3">Game</th>
+              <th className="text-left px-4 py-3">Bet</th>
               <th className="text-left px-4 py-3">Prize</th>
-              <th className="text-left px-4 py-3">Balance @ spin</th>
-              <th className="text-left px-4 py-3">Computed reward</th>
+              <th className="text-left px-4 py-3">Reward (USDT)</th>
               <th className="text-left px-4 py-3">Status</th>
               <th className="px-4 py-3 text-right">Actions</th>
             </tr>
@@ -65,8 +67,9 @@ function AdminSpin() {
             {filtered.map((r) => (
               <tr key={r.id}>
                 <td className="px-4 py-3 font-medium">{r.profiles?.full_name ?? "—"}</td>
+                <td className="px-4 py-3 capitalize">{(r.game ?? "luck_wheel").replace("_", " ")}</td>
+                <td className="px-4 py-3 text-warning font-semibold">{Number(r.bet_coins ?? 0).toLocaleString()} coins</td>
                 <td className="px-4 py-3 font-bold text-primary-glow">{r.prize_label}</td>
-                <td className="px-4 py-3">${Number(r.balance_at_spin).toFixed(2)}</td>
                 <td className="px-4 py-3 font-semibold">${Number(r.computed_amount).toFixed(2)}</td>
                 <td className="px-4 py-3"><StatusPill status={r.status} /></td>
                 <td className="px-4 py-3">
@@ -79,7 +82,7 @@ function AdminSpin() {
                 </td>
               </tr>
             ))}
-            {filtered.length === 0 && <tr><td colSpan={6} className="text-center py-10 text-muted-foreground text-sm">No spins</td></tr>}
+            {filtered.length === 0 && <tr><td colSpan={7} className="text-center py-10 text-muted-foreground text-sm">No rewards yet</td></tr>}
           </tbody>
         </table>
       </div>

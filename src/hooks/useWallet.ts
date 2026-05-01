@@ -6,6 +6,7 @@ export type Wallet = {
   balance: number;
   bonus_balance: number;
   pending_balance: number;
+  coins: number;
 };
 
 export function useWallet(userId: string | null | undefined) {

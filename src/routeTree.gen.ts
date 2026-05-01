@@ -16,11 +16,17 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as OffersRouteImport } from './routes/offers'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as GamesRouteImport } from './routes/games'
 import { Route as DepositRouteImport } from './routes/deposit'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as GamesIndexRouteImport } from './routes/games.index'
 import { Route as WithdrawUsdtRouteImport } from './routes/withdraw.usdt'
 import { Route as WithdrawBankRouteImport } from './routes/withdraw.bank'
+import { Route as GamesSlotMachineRouteImport } from './routes/games.slot-machine'
+import { Route as GamesLuckyBoxRouteImport } from './routes/games.lucky-box'
+import { Route as GamesLuckWheelRouteImport } from './routes/games.luck-wheel'
+import { Route as GamesBonusDropRouteImport } from './routes/games.bonus-drop'
 import { Route as DepositUsdtRouteImport } from './routes/deposit.usdt'
 import { Route as DepositPendingRouteImport } from './routes/deposit.pending'
 import { Route as DepositGiftCardRouteImport } from './routes/deposit.gift-card'
@@ -66,6 +72,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GamesRoute = GamesRouteImport.update({
+  id: '/games',
+  path: '/games',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DepositRoute = DepositRouteImport.update({
   id: '/deposit',
   path: '/deposit',
@@ -81,6 +92,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GamesIndexRoute = GamesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => GamesRoute,
+} as any)
 const WithdrawUsdtRoute = WithdrawUsdtRouteImport.update({
   id: '/usdt',
   path: '/usdt',
@@ -90,6 +106,26 @@ const WithdrawBankRoute = WithdrawBankRouteImport.update({
   id: '/bank',
   path: '/bank',
   getParentRoute: () => WithdrawRoute,
+} as any)
+const GamesSlotMachineRoute = GamesSlotMachineRouteImport.update({
+  id: '/slot-machine',
+  path: '/slot-machine',
+  getParentRoute: () => GamesRoute,
+} as any)
+const GamesLuckyBoxRoute = GamesLuckyBoxRouteImport.update({
+  id: '/lucky-box',
+  path: '/lucky-box',
+  getParentRoute: () => GamesRoute,
+} as any)
+const GamesLuckWheelRoute = GamesLuckWheelRouteImport.update({
+  id: '/luck-wheel',
+  path: '/luck-wheel',
+  getParentRoute: () => GamesRoute,
+} as any)
+const GamesBonusDropRoute = GamesBonusDropRouteImport.update({
+  id: '/bonus-drop',
+  path: '/bonus-drop',
+  getParentRoute: () => GamesRoute,
 } as any)
 const DepositUsdtRoute = DepositUsdtRouteImport.update({
   id: '/usdt',
@@ -141,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/deposit': typeof DepositRouteWithChildren
+  '/games': typeof GamesRouteWithChildren
   '/login': typeof LoginRoute
   '/offers': typeof OffersRoute
   '/profile': typeof ProfileRoute
@@ -157,8 +194,13 @@ export interface FileRoutesByFullPath {
   '/deposit/gift-card': typeof DepositGiftCardRoute
   '/deposit/pending': typeof DepositPendingRoute
   '/deposit/usdt': typeof DepositUsdtRoute
+  '/games/bonus-drop': typeof GamesBonusDropRoute
+  '/games/luck-wheel': typeof GamesLuckWheelRoute
+  '/games/lucky-box': typeof GamesLuckyBoxRoute
+  '/games/slot-machine': typeof GamesSlotMachineRoute
   '/withdraw/bank': typeof WithdrawBankRoute
   '/withdraw/usdt': typeof WithdrawUsdtRoute
+  '/games/': typeof GamesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -180,14 +222,20 @@ export interface FileRoutesByTo {
   '/deposit/gift-card': typeof DepositGiftCardRoute
   '/deposit/pending': typeof DepositPendingRoute
   '/deposit/usdt': typeof DepositUsdtRoute
+  '/games/bonus-drop': typeof GamesBonusDropRoute
+  '/games/luck-wheel': typeof GamesLuckWheelRoute
+  '/games/lucky-box': typeof GamesLuckyBoxRoute
+  '/games/slot-machine': typeof GamesSlotMachineRoute
   '/withdraw/bank': typeof WithdrawBankRoute
   '/withdraw/usdt': typeof WithdrawUsdtRoute
+  '/games': typeof GamesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/deposit': typeof DepositRouteWithChildren
+  '/games': typeof GamesRouteWithChildren
   '/login': typeof LoginRoute
   '/offers': typeof OffersRoute
   '/profile': typeof ProfileRoute
@@ -204,8 +252,13 @@ export interface FileRoutesById {
   '/deposit/gift-card': typeof DepositGiftCardRoute
   '/deposit/pending': typeof DepositPendingRoute
   '/deposit/usdt': typeof DepositUsdtRoute
+  '/games/bonus-drop': typeof GamesBonusDropRoute
+  '/games/luck-wheel': typeof GamesLuckWheelRoute
+  '/games/lucky-box': typeof GamesLuckyBoxRoute
+  '/games/slot-machine': typeof GamesSlotMachineRoute
   '/withdraw/bank': typeof WithdrawBankRoute
   '/withdraw/usdt': typeof WithdrawUsdtRoute
+  '/games/': typeof GamesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -213,6 +266,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/deposit'
+    | '/games'
     | '/login'
     | '/offers'
     | '/profile'
@@ -229,8 +283,13 @@ export interface FileRouteTypes {
     | '/deposit/gift-card'
     | '/deposit/pending'
     | '/deposit/usdt'
+    | '/games/bonus-drop'
+    | '/games/luck-wheel'
+    | '/games/lucky-box'
+    | '/games/slot-machine'
     | '/withdraw/bank'
     | '/withdraw/usdt'
+    | '/games/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -252,13 +311,19 @@ export interface FileRouteTypes {
     | '/deposit/gift-card'
     | '/deposit/pending'
     | '/deposit/usdt'
+    | '/games/bonus-drop'
+    | '/games/luck-wheel'
+    | '/games/lucky-box'
+    | '/games/slot-machine'
     | '/withdraw/bank'
     | '/withdraw/usdt'
+    | '/games'
   id:
     | '__root__'
     | '/'
     | '/admin'
     | '/deposit'
+    | '/games'
     | '/login'
     | '/offers'
     | '/profile'
@@ -275,14 +340,20 @@ export interface FileRouteTypes {
     | '/deposit/gift-card'
     | '/deposit/pending'
     | '/deposit/usdt'
+    | '/games/bonus-drop'
+    | '/games/luck-wheel'
+    | '/games/lucky-box'
+    | '/games/slot-machine'
     | '/withdraw/bank'
     | '/withdraw/usdt'
+    | '/games/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   DepositRoute: typeof DepositRouteWithChildren
+  GamesRoute: typeof GamesRouteWithChildren
   LoginRoute: typeof LoginRoute
   OffersRoute: typeof OffersRoute
   ProfileRoute: typeof ProfileRoute
@@ -343,6 +414,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/games': {
+      id: '/games'
+      path: '/games'
+      fullPath: '/games'
+      preLoaderRoute: typeof GamesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/deposit': {
       id: '/deposit'
       path: '/deposit'
@@ -364,6 +442,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/games/': {
+      id: '/games/'
+      path: '/'
+      fullPath: '/games/'
+      preLoaderRoute: typeof GamesIndexRouteImport
+      parentRoute: typeof GamesRoute
+    }
     '/withdraw/usdt': {
       id: '/withdraw/usdt'
       path: '/usdt'
@@ -377,6 +462,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/withdraw/bank'
       preLoaderRoute: typeof WithdrawBankRouteImport
       parentRoute: typeof WithdrawRoute
+    }
+    '/games/slot-machine': {
+      id: '/games/slot-machine'
+      path: '/slot-machine'
+      fullPath: '/games/slot-machine'
+      preLoaderRoute: typeof GamesSlotMachineRouteImport
+      parentRoute: typeof GamesRoute
+    }
+    '/games/lucky-box': {
+      id: '/games/lucky-box'
+      path: '/lucky-box'
+      fullPath: '/games/lucky-box'
+      preLoaderRoute: typeof GamesLuckyBoxRouteImport
+      parentRoute: typeof GamesRoute
+    }
+    '/games/luck-wheel': {
+      id: '/games/luck-wheel'
+      path: '/luck-wheel'
+      fullPath: '/games/luck-wheel'
+      preLoaderRoute: typeof GamesLuckWheelRouteImport
+      parentRoute: typeof GamesRoute
+    }
+    '/games/bonus-drop': {
+      id: '/games/bonus-drop'
+      path: '/bonus-drop'
+      fullPath: '/games/bonus-drop'
+      preLoaderRoute: typeof GamesBonusDropRouteImport
+      parentRoute: typeof GamesRoute
     }
     '/deposit/usdt': {
       id: '/deposit/usdt'
@@ -479,6 +592,24 @@ const DepositRouteChildren: DepositRouteChildren = {
 const DepositRouteWithChildren =
   DepositRoute._addFileChildren(DepositRouteChildren)
 
+interface GamesRouteChildren {
+  GamesBonusDropRoute: typeof GamesBonusDropRoute
+  GamesLuckWheelRoute: typeof GamesLuckWheelRoute
+  GamesLuckyBoxRoute: typeof GamesLuckyBoxRoute
+  GamesSlotMachineRoute: typeof GamesSlotMachineRoute
+  GamesIndexRoute: typeof GamesIndexRoute
+}
+
+const GamesRouteChildren: GamesRouteChildren = {
+  GamesBonusDropRoute: GamesBonusDropRoute,
+  GamesLuckWheelRoute: GamesLuckWheelRoute,
+  GamesLuckyBoxRoute: GamesLuckyBoxRoute,
+  GamesSlotMachineRoute: GamesSlotMachineRoute,
+  GamesIndexRoute: GamesIndexRoute,
+}
+
+const GamesRouteWithChildren = GamesRoute._addFileChildren(GamesRouteChildren)
+
 interface WithdrawRouteChildren {
   WithdrawBankRoute: typeof WithdrawBankRoute
   WithdrawUsdtRoute: typeof WithdrawUsdtRoute
@@ -497,6 +628,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   DepositRoute: DepositRouteWithChildren,
+  GamesRoute: GamesRouteWithChildren,
   LoginRoute: LoginRoute,
   OffersRoute: OffersRoute,
   ProfileRoute: ProfileRoute,
@@ -508,3 +640,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

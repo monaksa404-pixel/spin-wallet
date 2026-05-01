@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { Bell, Menu, Wallet, Gift, AlarmClock, ArrowDownToLine, ArrowUpFromLine, Disc3, Tag } from "lucide-react";
+import { Bell, Menu, Wallet, Gift, AlarmClock, ArrowDownToLine, ArrowUpFromLine, Gamepad2, Tag } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/hooks/useAuth";
 import { useWallet } from "@/hooks/useWallet";
@@ -88,7 +88,7 @@ function HomePage() {
             {[
               { to: "/deposit", icon: ArrowDownToLine, label: "Deposit" },
               { to: "/withdraw", icon: ArrowUpFromLine, label: "Withdraw" },
-              { to: "/spin", icon: Disc3, label: "Spin Wheel" },
+              { to: "/games", icon: Gamepad2, label: "Games" },
               { to: "/offers", icon: Tag, label: "Offers" },
             ].map((a) => (
               <Link key={a.to} to={a.to} className="bg-card border border-border rounded-2xl p-3 flex flex-col items-center gap-2 hover:border-primary transition">
