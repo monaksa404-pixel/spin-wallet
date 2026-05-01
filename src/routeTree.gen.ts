@@ -16,6 +16,7 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as OffersRouteImport } from './routes/offers'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as GamesRouteImport } from './routes/games'
 import { Route as DepositRouteImport } from './routes/deposit'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -71,6 +72,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GamesRoute = GamesRouteImport.update({
+  id: '/games',
+  path: '/games',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DepositRoute = DepositRouteImport.update({
   id: '/deposit',
   path: '/deposit',
@@ -87,9 +93,9 @@ const IndexRoute = IndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const GamesIndexRoute = GamesIndexRouteImport.update({
-  id: '/games/',
-  path: '/games/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => GamesRoute,
 } as any)
 const WithdrawUsdtRoute = WithdrawUsdtRouteImport.update({
   id: '/usdt',
@@ -171,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/deposit': typeof DepositRouteWithChildren
+  '/games': typeof GamesRouteWithChildren
   '/login': typeof LoginRoute
   '/offers': typeof OffersRoute
   '/profile': typeof ProfileRoute
@@ -228,6 +235,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/deposit': typeof DepositRouteWithChildren
+  '/games': typeof GamesRouteWithChildren
   '/login': typeof LoginRoute
   '/offers': typeof OffersRoute
   '/profile': typeof ProfileRoute
@@ -258,6 +266,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/deposit'
+    | '/games'
     | '/login'
     | '/offers'
     | '/profile'
@@ -314,6 +323,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/deposit'
+    | '/games'
     | '/login'
     | '/offers'
     | '/profile'
@@ -343,6 +353,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   DepositRoute: typeof DepositRouteWithChildren
+  GamesRoute: typeof GamesRouteWithChildren
   LoginRoute: typeof LoginRoute
   OffersRoute: typeof OffersRoute
   ProfileRoute: typeof ProfileRoute
@@ -350,7 +361,6 @@ export interface RootRouteChildren {
   SpinRoute: typeof SpinRoute
   WalletRoute: typeof WalletRoute
   WithdrawRoute: typeof WithdrawRouteWithChildren
-  GamesIndexRoute: typeof GamesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -404,6 +414,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/games': {
+      id: '/games'
+      path: '/games'
+      fullPath: '/games'
+      preLoaderRoute: typeof GamesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/deposit': {
       id: '/deposit'
       path: '/deposit'
@@ -427,10 +444,10 @@ declare module '@tanstack/react-router' {
     }
     '/games/': {
       id: '/games/'
-      path: '/games'
+      path: '/'
       fullPath: '/games/'
       preLoaderRoute: typeof GamesIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof GamesRoute
     }
     '/withdraw/usdt': {
       id: '/withdraw/usdt'
@@ -575,6 +592,24 @@ const DepositRouteChildren: DepositRouteChildren = {
 const DepositRouteWithChildren =
   DepositRoute._addFileChildren(DepositRouteChildren)
 
+interface GamesRouteChildren {
+  GamesBonusDropRoute: typeof GamesBonusDropRoute
+  GamesLuckWheelRoute: typeof GamesLuckWheelRoute
+  GamesLuckyBoxRoute: typeof GamesLuckyBoxRoute
+  GamesSlotMachineRoute: typeof GamesSlotMachineRoute
+  GamesIndexRoute: typeof GamesIndexRoute
+}
+
+const GamesRouteChildren: GamesRouteChildren = {
+  GamesBonusDropRoute: GamesBonusDropRoute,
+  GamesLuckWheelRoute: GamesLuckWheelRoute,
+  GamesLuckyBoxRoute: GamesLuckyBoxRoute,
+  GamesSlotMachineRoute: GamesSlotMachineRoute,
+  GamesIndexRoute: GamesIndexRoute,
+}
+
+const GamesRouteWithChildren = GamesRoute._addFileChildren(GamesRouteChildren)
+
 interface WithdrawRouteChildren {
   WithdrawBankRoute: typeof WithdrawBankRoute
   WithdrawUsdtRoute: typeof WithdrawUsdtRoute
@@ -593,6 +628,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   DepositRoute: DepositRouteWithChildren,
+  GamesRoute: GamesRouteWithChildren,
   LoginRoute: LoginRoute,
   OffersRoute: OffersRoute,
   ProfileRoute: ProfileRoute,
@@ -600,7 +636,6 @@ const rootRouteChildren: RootRouteChildren = {
   SpinRoute: SpinRoute,
   WalletRoute: WalletRoute,
   WithdrawRoute: WithdrawRouteWithChildren,
-  GamesIndexRoute: GamesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
