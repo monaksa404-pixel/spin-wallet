@@ -11,7 +11,7 @@ import { CurrencySelect } from "@/components/CurrencySelect";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/games")({
+export const Route = createFileRoute("/games/")({
   head: () => ({ meta: [{ title: "Games — GameBonus" }] }),
   component: GamesHub,
 });
