@@ -19,33 +19,42 @@ function isoDeadlineStillAhead(iso: string | null | undefined): iso is string {
   return Number.isFinite(t) && t > Date.now();
 }
 
+// Cache deadline_hours so we don't re-query on every refresh tick.
+let cachedDeadlineHours: number | null = null;
+
 async function computeDepositDeadlineFallback(userId: string, walletRow: Wallet | null): Promise<string | null> {
   if (isoDeadlineStillAhead(walletRow?.balance_deadline_at ?? null)) return null;
 
-  let hours = 10;
-  try {
-    const { data } = await supabase.from("balance_deadline_settings").select("deadline_hours").eq("id", 1).maybeSingle();
-    const h = Number(data?.deadline_hours);
-    if (Number.isFinite(h) && h > 0) hours = h;
-  } catch {
-    /* default hours */
-  }
-
-  let createdAt: string | null = null;
-  try {
-    const { data, error } = await supabase
+  // Fetch settings (cached) and latest pending deposit in parallel.
+  const [settingsResult, depositResult] = await Promise.all([
+    cachedDeadlineHours !== null
+      ? Promise.resolve(cachedDeadlineHours)
+      : supabase
+          .from("balance_deadline_settings")
+          .select("deadline_hours")
+          .eq("id", 1)
+          .maybeSingle()
+          .then(({ data }) => {
+            const h = Number(data?.deadline_hours);
+            const hours = Number.isFinite(h) && h > 0 ? h : 10;
+            cachedDeadlineHours = hours;
+            return hours;
+          })
+          .catch(() => 10),
+    supabase
       .from("deposits")
       .select("created_at")
       .eq("user_id", userId)
       .eq("status", "pending")
       .order("created_at", { ascending: false })
-      .limit(1);
-    if (error) return null;
-    const row = Array.isArray(data) ? data[0] : null;
-    createdAt = row?.created_at ?? null;
-  } catch {
-    return null;
-  }
+      .limit(1),
+  ]);
+
+  const hours = typeof settingsResult === "number" ? settingsResult : 10;
+
+  if (depositResult.error) return null;
+  const row = Array.isArray(depositResult.data) ? depositResult.data[0] : null;
+  const createdAt: string | null = row?.created_at ?? null;
 
   if (!createdAt) return null;
   const iso = new Date(new Date(createdAt).getTime() + hours * 60 * 60 * 1000).toISOString();
@@ -77,6 +86,8 @@ export function useWallet(userId: string | null | undefined) {
   const [loading, setLoading] = useState(true);
   const listenerId = useRef(crypto.randomUUID());
   const refreshDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Track previous pending state to avoid re-querying fallback on every refresh tick.
+  const prevPendingRef = useRef<boolean | null>(null);
 
   /**
    * Deposit countdown: prefer DB rolling deadline whenever it is still in the future (set on pending submit).
@@ -93,7 +104,7 @@ export function useWallet(userId: string | null | undefined) {
   /**
    * Lightweight read — just fetches wallet + pending-deposit flag.
    * Does NOT call wallet_apply_balance_expiry (which can zero balances).
-   * The expiry check is only done once on initial mount via checkExpiryOnce.
+   * The expiry check is only done once on initial mount.
    */
   const refreshWallet = useCallback(async () => {
     if (!userId) return;
@@ -110,8 +121,15 @@ export function useWallet(userId: string | null | undefined) {
     setHasPendingDeposit(pending);
     setLoading(false);
 
-    const fb = pending ? await computeDepositDeadlineFallback(userId, row) : null;
-    setFallbackDeadlineAt(fb);
+    // Only recompute fallback deadline when pending status actually changes.
+    if (prevPendingRef.current !== pending) {
+      prevPendingRef.current = pending;
+      if (pending) {
+        void computeDepositDeadlineFallback(userId, row).then(setFallbackDeadlineAt);
+      } else {
+        setFallbackDeadlineAt(null);
+      }
+    }
   }, [userId]);
 
   useEffect(() => {
@@ -120,15 +138,17 @@ export function useWallet(userId: string | null | undefined) {
       setFallbackDeadlineAt(null);
       setHasPendingDeposit(false);
       setLoading(false);
+      prevPendingRef.current = null;
       return;
     }
     let cancelled = false;
     void (async () => {
-      // Run expiry check ONCE on mount, then read wallet fresh.
-      await supabase.rpc("wallet_apply_balance_expiry").catch(() => {});
-      if (cancelled) return;
+      // Read wallet immediately so the UI renders without delay.
       await refreshWallet();
       if (cancelled) return;
+      // Expiry check runs in background — if it changes the wallet row,
+      // the realtime wallets channel fires and calls refreshWallet again.
+      void supabase.rpc("wallet_apply_balance_expiry").catch(() => {});
     })();
 
     const walletChannel = supabase
