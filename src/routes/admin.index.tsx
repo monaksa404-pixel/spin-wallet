@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Clock, Save, UserClock, Building2 } from "lucide-react";
+import { Clock, Save, CalendarClock, Building2 } from "lucide-react";
 import { AdminShell, StatCard, StatusPill } from "@/components/AdminShell";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -217,7 +217,7 @@ function AdminDashboard() {
       <div className="bg-card border border-border rounded-2xl p-5 mb-6 flex flex-col gap-4">
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
-            <UserClock className="w-5 h-5 text-primary-glow" />
+            <CalendarClock className="w-5 h-5 text-primary-glow" />
           </div>
           <div>
             <p className="font-semibold">Set countdown deadline for a user</p>
