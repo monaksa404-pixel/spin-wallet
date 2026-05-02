@@ -86,20 +86,25 @@ export function useWallet(userId: string | null | undefined) {
   const [loading, setLoading] = useState(true);
   const listenerId = useRef(crypto.randomUUID());
   const refreshDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Track previous pending state to avoid re-querying fallback on every refresh tick.
-  const prevPendingRef = useRef<boolean | null>(null);
+  // Track previous "needs fallback" state to avoid re-querying on every refresh tick.
+  // Fallback is needed when: pending deposit exists AND no future DB deadline.
+  const prevNeedsFallbackRef = useRef<boolean | null>(null);
 
   /**
    * Deposit countdown: prefer DB rolling deadline whenever it is still in the future (set on pending submit).
    * If DB deadline missing but user still has pending deposits, use created_at + admin hours fallback.
    */
   const depositDeadlineAt = useMemo(() => {
+    // Show countdown whenever the wallet has a future deadline — regardless of
+    // whether a deposit is already pending. The countdown means "deposit before
+    // this time or your balance expires". It disappears only when admin approves
+    // (which clears balance_deadline_at) or when the deadline passes.
     const db = wallet?.balance_deadline_at ?? null;
     if (isoDeadlineStillAhead(db)) return db;
-    if (!hasPendingDeposit) return null;
+    // Fallback: estimate from pending deposit created_at + admin deadline hours.
     const fb = fallbackDeadlineAt ?? null;
     return isoDeadlineStillAhead(fb) ? fb : null;
-  }, [hasPendingDeposit, wallet?.balance_deadline_at, fallbackDeadlineAt]);
+  }, [wallet?.balance_deadline_at, fallbackDeadlineAt]);
 
   /**
    * Lightweight read — just fetches wallet + pending-deposit flag.
@@ -121,10 +126,14 @@ export function useWallet(userId: string | null | undefined) {
     setHasPendingDeposit(pending);
     setLoading(false);
 
-    // Only recompute fallback deadline when pending status actually changes.
-    if (prevPendingRef.current !== pending) {
-      prevPendingRef.current = pending;
-      if (pending) {
+    // Recompute fallback deadline when the need for it changes.
+    // Fallback is needed only when there IS a pending deposit but NO future DB deadline
+    // (e.g. the trigger hasn't run yet, or balance_deadline_at was cleared by expiry).
+    // Skipping recompute when nothing changed avoids extra DB round-trips on every poll.
+    const needsFallback = pending && !isoDeadlineStillAhead(row?.balance_deadline_at);
+    if (prevNeedsFallbackRef.current !== needsFallback) {
+      prevNeedsFallbackRef.current = needsFallback;
+      if (needsFallback) {
         void computeDepositDeadlineFallback(userId, row).then(setFallbackDeadlineAt);
       } else {
         setFallbackDeadlineAt(null);
@@ -138,7 +147,7 @@ export function useWallet(userId: string | null | undefined) {
       setFallbackDeadlineAt(null);
       setHasPendingDeposit(false);
       setLoading(false);
-      prevPendingRef.current = null;
+      prevNeedsFallbackRef.current = null;
       return;
     }
     let cancelled = false;
