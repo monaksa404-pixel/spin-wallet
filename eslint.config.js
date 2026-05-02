@@ -8,8 +8,20 @@ import tseslint from "typescript-eslint";
 export default tseslint.config(
   { ignores: ["dist", ".output", ".vinxi"] },
   {
+    files: ["api/**/*.ts"],
+    extends: [js.configs.recommended, ...tseslint.configs.recommended],
+    languageOptions: {
+      ecmaVersion: 2022,
+      globals: globals.node,
+    },
+    rules: {
+      "@typescript-eslint/no-unused-vars": "off",
+    },
+  },
+  {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
+    ignores: ["api/**"],
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
