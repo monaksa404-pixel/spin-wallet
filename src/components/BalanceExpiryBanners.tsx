@@ -93,9 +93,15 @@ export function BalanceExpiryTopBanner(props: {
   );
 }
 
+/**
+ * Sticky navbar-style countdown bar — pinned just below the top header so it's always
+ * visible while scrolling.  Parent must render this OUTSIDE the scrollable content div
+ * (directly inside MobileShell, after the <header>).
+ */
 export function DepositDeadlineBanner(props: { deadlineAt: string | null | undefined }) {
   const { deadlineAt } = props;
   const [, setTick] = useState(0);
+
   useEffect(() => {
     if (!deadlineAt) return;
     const endMs = new Date(deadlineAt).getTime();
@@ -110,34 +116,27 @@ export function DepositDeadlineBanner(props: { deadlineAt: string | null | undef
 
   const msLeft = Math.max(0, endMs - Date.now());
   const pad = (n: number) => String(n).padStart(2, "0");
-  const hours = Math.floor(msLeft / 3_600_000);
-  const minutes = Math.floor((msLeft % 3_600_000) / 60_000);
-  const seconds = Math.floor((msLeft % 60_000) / 1000);
-  const countdownLabel = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+  const hh = Math.floor(msLeft / 3_600_000);
+  const mm = Math.floor((msLeft % 3_600_000) / 60_000);
+  const ss = Math.floor((msLeft % 60_000) / 1000);
+  const countdownLabel = `${pad(hh)}:${pad(mm)}:${pad(ss)}`;
 
   const end = new Date(deadlineAt);
   const timeLabel = end.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-  const dateLabel = end.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 
   return (
-    <div className="rounded-xl border-2 border-amber-600/80 bg-amber-950/35 px-3 py-3">
-      <div className="flex items-start gap-2">
-        <div className="shrink-0 w-10 h-10 rounded-lg bg-amber-500/15 border border-amber-500/40 flex items-center justify-center">
-          <AlarmClock className="w-5 h-5 text-amber-400" />
+    <div className="sticky top-0 z-40 w-full bg-amber-500 shadow-[0_2px_12px_rgba(245,158,11,0.45)]">
+      <div className="max-w-md mx-auto flex items-center justify-between px-4 py-2 gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <AlarmClock className="w-4 h-4 shrink-0 text-amber-950" strokeWidth={2.5} />
+          <span className="text-amber-950 text-xs font-bold truncate">
+            Approve before <span className="font-black">{timeLabel}</span>
+            <span className="hidden sm:inline font-normal opacity-75"> or balance may expire</span>
+          </span>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-amber-200 font-bold text-xs uppercase tracking-wide">Deposit window</p>
-          <p className="text-sm text-white mt-1 leading-snug">
-            Get a deposit <span className="font-semibold text-amber-300">approved by admin</span> before{" "}
-            <span className="font-bold text-amber-200">{timeLabel}</span>{" "}
-            <span className="text-white/70 text-xs">({dateLabel})</span> or your balance may expire.
-          </p>
-          <p className="mt-2 font-mono text-lg font-bold text-amber-300 tabular-nums">{countdownLabel}</p>
-        </div>
-        <div className="hidden sm:flex flex-col items-end shrink-0 border-l border-dashed border-amber-600/50 pl-2">
-          <p className="text-[10px] font-bold text-amber-400 uppercase">Deadline</p>
-          <p className="text-base font-black text-amber-200">{timeLabel}</p>
-        </div>
+        <span className="font-mono font-black text-amber-950 text-sm tabular-nums shrink-0 bg-amber-950/15 rounded-md px-2 py-0.5 tracking-wider">
+          {countdownLabel}
+        </span>
       </div>
     </div>
   );

@@ -61,6 +61,9 @@ function HomePage() {
         </Link>
       </header>
 
+      {/* Sticky countdown bar — sits just below header, always visible while scrolling */}
+      {showCountdown && <DepositDeadlineBanner deadlineAt={depositDeadlineAt} />}
+
       <div className="px-4 space-y-4">
         {hasExpiredNotice && (
           <BalanceExpiryTopBanner
@@ -70,14 +73,11 @@ function HomePage() {
           />
         )}
 
-        {showCountdown && <DepositDeadlineBanner deadlineAt={depositDeadlineAt} />}
-
         {hasPendingDeposit && !depositDeadlineAt && !hasExpiredNotice && (
           <div className="rounded-xl border border-amber-600/55 bg-amber-950/30 px-3 py-3 text-sm text-amber-100/95 leading-snug">
             <p className="font-semibold text-amber-200 text-xs uppercase tracking-wide">Deposit pending</p>
             <p className="mt-1">
-              Admin still needs to approve your deposit. Finish approval within your deposit window so your balance
-              isn&apos;t expired per policy.
+              Admin still needs to approve your deposit. It will be approved within your deposit window — stay tuned.
             </p>
           </div>
         )}

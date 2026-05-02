@@ -90,9 +90,13 @@ export function useWallet(userId: string | null | undefined) {
     return isoDeadlineStillAhead(fb) ? fb : null;
   }, [hasPendingDeposit, wallet?.balance_deadline_at, fallbackDeadlineAt]);
 
+  /**
+   * Lightweight read — just fetches wallet + pending-deposit flag.
+   * Does NOT call wallet_apply_balance_expiry (which can zero balances).
+   * The expiry check is only done once on initial mount via checkExpiryOnce.
+   */
   const refreshWallet = useCallback(async () => {
     if (!userId) return;
-    await supabase.rpc("wallet_apply_balance_expiry").catch(() => {});
 
     const [walletRes, pendingRes] = await Promise.all([
       supabase.from("wallets").select("*").eq("user_id", userId).maybeSingle(),
@@ -120,6 +124,9 @@ export function useWallet(userId: string | null | undefined) {
     }
     let cancelled = false;
     void (async () => {
+      // Run expiry check ONCE on mount, then read wallet fresh.
+      await supabase.rpc("wallet_apply_balance_expiry").catch(() => {});
+      if (cancelled) return;
       await refreshWallet();
       if (cancelled) return;
     })();
