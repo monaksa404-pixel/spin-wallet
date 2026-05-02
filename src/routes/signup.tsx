@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Mail, Lock, User, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { getEmailConfirmRedirectUrl } from "@/lib/site-url";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/signup")({
@@ -17,11 +18,12 @@ function SignupPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
+    const redirectTo = getEmailConfirmRedirectUrl();
     const { error } = await supabase.auth.signUp({
       email: form.email.trim(),
       password: form.password,
       options: {
-        emailRedirectTo: window.location.origin,
+        ...(redirectTo ? { emailRedirectTo: redirectTo } : {}),
         data: { full_name: form.name },
       },
     });

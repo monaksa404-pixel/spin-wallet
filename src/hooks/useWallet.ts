@@ -33,15 +33,16 @@ async function computeDepositDeadlineFallback(userId: string, walletRow: Wallet 
 
   let createdAt: string | null = null;
   try {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("deposits")
       .select("created_at")
       .eq("user_id", userId)
       .eq("status", "pending")
       .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    createdAt = data?.created_at ?? null;
+      .limit(1);
+    if (error) return null;
+    const row = Array.isArray(data) ? data[0] : null;
+    createdAt = row?.created_at ?? null;
   } catch {
     return null;
   }

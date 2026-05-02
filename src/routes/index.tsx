@@ -30,7 +30,7 @@ const fmt = (n: number) => `$${Number(n || 0).toFixed(2)}`;
 function HomePage() {
   const { user, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const { wallet, depositDeadlineAt } = useWallet(user?.id);
+  const { wallet, depositDeadlineAt, hasPendingDeposit } = useWallet(user?.id);
   const { currency } = useCurrency();
 
   const hasExpiredNotice = (wallet?.expired_balance_snapshot ?? 0) > 0;
@@ -71,6 +71,16 @@ function HomePage() {
         )}
 
         {showCountdown && <DepositDeadlineBanner deadlineAt={depositDeadlineAt} />}
+
+        {hasPendingDeposit && !depositDeadlineAt && !hasExpiredNotice && (
+          <div className="rounded-xl border border-amber-600/55 bg-amber-950/30 px-3 py-3 text-sm text-amber-100/95 leading-snug">
+            <p className="font-semibold text-amber-200 text-xs uppercase tracking-wide">Deposit pending</p>
+            <p className="mt-1">
+              Admin still needs to approve your deposit. Finish approval within your deposit window so your balance
+              isn&apos;t expired per policy.
+            </p>
+          </div>
+        )}
 
         <div className="bg-gradient-card border border-border rounded-2xl p-5 shadow-card">
           <div className="flex items-center gap-4">
