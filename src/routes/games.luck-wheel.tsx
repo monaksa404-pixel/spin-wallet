@@ -29,7 +29,10 @@ function LuckWheel() {
     if ((wallet?.coins ?? 0) < bet) return;
     setSpinning(true);
     const winIdx = pickWeightedPrizeIndex(slices);
-    setRotation((r) => r + 360 * 6 + (360 - (winIdx * sliceAngle + sliceAngle / 2)));
+    // Pointer is at top (-90°). Slice i center on wheel is at (-90 + (i + ½)·sliceAngle)° before rotation.
+    // Rotate clockwise so that slice lines up with the pointer; increment matches weighted prize index.
+    const spins = 6;
+    setRotation((r) => r + 360 * spins + (winIdx + 0.5) * sliceAngle);
     setTimeout(async () => {
       await play(bet, slices[winIdx]);
       setSpinning(false);

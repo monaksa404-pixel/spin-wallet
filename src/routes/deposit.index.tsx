@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronRight, CreditCard, Coins, Landmark } from "lucide-react";
+import { ChevronRight, CreditCard, Coins, Gift, Landmark, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { MobileShell } from "@/components/MobileShell";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useWallet } from "@/hooks/useWallet";
 
 export const Route = createFileRoute("/deposit/")({
   head: () => ({ meta: [{ title: "Deposit — GameBonus" }] }),
@@ -99,6 +100,32 @@ function DepositPage() {
         </div>
 
         <div>
+          {user && (
+            <div className="rounded-2xl border border-border bg-gradient-card p-4 shadow-card mb-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Your balances</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                    <Wallet className="w-5 h-5 text-primary-glow" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase text-muted-foreground font-medium">Balance</p>
+                    <p className="text-xl font-bold truncate">{fmtUsd(wallet?.balance)}</p>
+                  </div>
+                </div>
+                <div className="flex gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                    <Gift className="w-5 h-5 text-primary-glow" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase text-muted-foreground font-medium">Bonus</p>
+                    <p className="text-xl font-bold text-primary-glow truncate">{fmtUsd(wallet?.bonus_balance)}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">From admin</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-semibold">Recent Deposits</p>
           </div>

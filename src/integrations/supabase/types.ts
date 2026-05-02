@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      balance_deadline_settings: {
+        Row: {
+          deadline_hours: number
+          id: number
+          updated_at: string
+        }
+        Insert: {
+          deadline_hours?: number
+          id?: number
+          updated_at?: string
+        }
+        Update: {
+          deadline_hours?: number
+          id?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       deposits: {
         Row: {
           admin_note: string | null
@@ -65,6 +83,24 @@ export type Database = {
           status?: Database["public"]["Enums"]["request_status"]
           usdt_tx_address?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      offer_promotions: {
+        Row: {
+          bonus_label: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          bonus_label?: string
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          bonus_label?: string
+          id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -271,6 +307,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_set_balance_deadline_hours: {
+        Args: { _hours: number }
+        Returns: undefined
+      }
       approve_deposit: {
         Args: { _amount: number; _id: string }
         Returns: undefined
@@ -301,6 +341,10 @@ export type Database = {
         Returns: undefined
       }
       reject_spin: { Args: { _id: string }; Returns: undefined }
+      wallet_apply_balance_expiry: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       reject_withdrawal: {
         Args: { _id: string; _note: string }
         Returns: undefined

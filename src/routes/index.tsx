@@ -7,6 +7,14 @@ import { useWallet } from "@/hooks/useWallet";
 import { useCurrency } from "@/hooks/useCurrency";
 import { CurrencySelect } from "@/components/CurrencySelect";
 import { fmtCurrency } from "@/lib/games";
+import { HomeOffersCarousel } from "@/components/HomeOffersCarousel";
+import {
+  BalanceExpiryBottomBar,
+  BalanceExpiryTopBanner,
+  DepositDeadlineBanner,
+  MinWithdrawFooter,
+  WithdrawQuickLink,
+} from "@/components/BalanceExpiryBanners";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -23,8 +31,17 @@ const fmt = (n: number) => `$${Number(n || 0).toFixed(2)}`;
 function HomePage() {
   const { user, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const { wallet } = useWallet(user?.id);
+  const { wallet, depositDeadlineAt } = useWallet(user?.id);
   const { currency } = useCurrency();
+
+  const expiredSnap = wallet?.expired_balance_snapshot ?? 0;
+  const hasExpiredNotice = expiredSnap > 0;
+  const deadlineMs = depositDeadlineAt ? new Date(depositDeadlineAt).getTime() : NaN;
+  const showCountdown =
+    !!depositDeadlineAt &&
+    !Number.isNaN(deadlineMs) &&
+    deadlineMs > Date.now() &&
+    !hasExpiredNotice;
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/login" });
@@ -46,17 +63,40 @@ function HomePage() {
         </Link>
       </header>
 
-      <div className="px-4 space-y-4">
-        <div className="bg-gradient-card border border-border rounded-2xl p-5 shadow-card flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-glow">
-            <Wallet className="w-7 h-7" />
+      <div className={`px-4 space-y-4 ${hasExpiredNotice ? "pb-36" : ""}`}>
+        {hasExpiredNotice && (
+          <BalanceExpiryTopBanner
+            expiredSnapshot={wallet?.expired_balance_snapshot}
+            missedDeadlineAt={wallet?.missed_deadline_at}
+            balanceExpiredAt={wallet?.balance_expired_at}
+          />
+        )}
+
+        {showCountdown && <DepositDeadlineBanner deadlineAt={depositDeadlineAt} />}
+
+        <div className="bg-gradient-card border border-border rounded-2xl p-5 shadow-card">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-glow shrink-0">
+              <Wallet className="w-7 h-7" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">Total Balance</p>
+              <p className="text-3xl font-bold">{fmtCurrency(wallet?.balance ?? 0, currency)}</p>
+              <p className="text-[10px] text-muted-foreground mt-1">{fmt(wallet?.balance ?? 0)} USDT</p>
+              {hasExpiredNotice && (
+                <p className="text-xs text-white/85 mt-2 leading-snug">
+                  Your previous balance of{" "}
+                  <span className="font-semibold text-red-400">${Number(expiredSnap).toFixed(2)}</span> has{" "}
+                  <span className="text-red-400 font-semibold">expired</span> and is no longer available.
+                </p>
+              )}
+            </div>
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              <WithdrawQuickLink disabled={hasExpiredNotice} />
+              <CurrencySelect />
+            </div>
           </div>
-          <div className="flex-1">
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">Total Balance</p>
-            <p className="text-3xl font-bold">{fmtCurrency(wallet?.balance ?? 0, currency)}</p>
-            <p className="text-[10px] text-muted-foreground mt-1">{fmt(wallet?.balance ?? 0)} USDT</p>
-          </div>
-          <CurrencySelect />
+          <MinWithdrawFooter />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -76,17 +116,7 @@ function HomePage() {
           </div>
         </div>
 
-        <div className="bg-gradient-bonus rounded-2xl p-5 relative overflow-hidden shadow-card">
-          <div className="relative z-10">
-            <p className="text-xs uppercase tracking-wider opacity-80">Deposit & Get</p>
-            <p className="text-4xl font-extrabold mt-1">5X BONUS</p>
-            <p className="text-xs opacity-80 mt-1">Limited Time Offer</p>
-            <Link to="/deposit" className="inline-block mt-3 px-4 py-2 bg-background/30 backdrop-blur rounded-lg text-sm font-semibold border border-white/20">
-              Deposit Now
-            </Link>
-          </div>
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 text-7xl opacity-30">🎁</div>
-        </div>
+        <HomeOffersCarousel />
 
         <div>
           <p className="text-sm font-semibold mb-3">Quick Actions</p>
@@ -107,6 +137,13 @@ function HomePage() {
           </div>
         </div>
       </div>
+
+      {hasExpiredNotice && (
+        <BalanceExpiryBottomBar
+          expiredSnapshot={wallet?.expired_balance_snapshot}
+          missedDeadlineAt={wallet?.missed_deadline_at}
+        />
+      )}
     </MobileShell>
   );
 }

@@ -9,6 +9,9 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/deposit/gift-card")({
   head: () => ({ meta: [{ title: "Gift Card Deposit — GameBonus" }] }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    brand: typeof search.brand === "string" ? search.brand : undefined,
+  }),
   component: GiftCardDeposit,
 });
 
@@ -42,6 +45,7 @@ function publicImageSrc(file: string): string {
 }
 
 function GiftCardDeposit() {
+  const { brand: brandFromUrl } = Route.useSearch();
   const [selected, setSelected] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -51,6 +55,11 @@ function GiftCardDeposit() {
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/login" });
   }, [loading, user, navigate]);
+
+  useEffect(() => {
+    if (!brandFromUrl) return;
+    if (GIFT_CARDS.some((c) => c.id === brandFromUrl)) setSelected(brandFromUrl);
+  }, [brandFromUrl]);
 
   const submit = async () => {
     if (!selected || !code.trim()) return;
@@ -93,7 +102,7 @@ function GiftCardDeposit() {
           </div>
 
           <div
-            className="flex gap-2.5 overflow-x-auto pb-3 pt-1 snap-x snap-mandatory [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]"
+            className="flex gap-2.5 overflow-x-auto pb-4 pt-4 snap-x snap-mandatory [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]"
             role="listbox"
             aria-label="Gift card brands"
           >
@@ -108,14 +117,24 @@ function GiftCardDeposit() {
                   onClick={() => setSelected(c.id)}
                   className={`snap-start shrink-0 w-[4.6rem] sm:w-[4.85rem] rounded-xl border-2 bg-card overflow-hidden transition shadow-card flex flex-col ${active ? "border-primary-glow shadow-glow ring-2 ring-primary/30" : "border-border hover:border-primary/50"}`}
                 >
-                  <div className="aspect-square bg-muted/40 flex items-center justify-center p-2">
-                    <img
-                      src={publicImageSrc(c.file)}
-                      alt=""
-                      className="max-h-full max-w-full object-contain"
-                      loading="lazy"
-                      decoding="async"
-                    />
+                  <div className="relative aspect-square w-full shrink-0 bg-muted/40 rounded-t-xl overflow-hidden">
+                    <div className="absolute inset-0 z-0 flex items-start justify-start p-1.5 pr-10 pt-1">
+                      <img
+                        src={publicImageSrc(c.file)}
+                        alt=""
+                        className="max-h-[88%] max-w-[88%] object-contain object-left-top relative z-0"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </div>
+                    {/* Emoji renders reliably across browsers; sits above logo art */}
+                    <span
+                      className="absolute top-0 right-0 z-[100] flex h-9 min-w-[2.25rem] items-center justify-center rounded-bl-lg bg-gradient-to-br from-orange-500 to-red-600 px-1 text-[20px] leading-none shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_2px_8px_rgba(0,0,0,0.5)] pointer-events-none select-none"
+                      title="Popular"
+                      aria-hidden
+                    >
+                      🔥
+                    </span>
                   </div>
                   <p className="text-[9px] font-semibold text-center leading-tight px-1 py-1.5 line-clamp-2 text-foreground">
                     {c.displayName}

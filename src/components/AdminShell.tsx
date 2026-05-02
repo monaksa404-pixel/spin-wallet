@@ -22,7 +22,10 @@ export function AdminShell({ title, children }: { title: string; children: React
     if (!loading && user && !isAdmin) navigate({ to: "/" });
   }, [loading, user, isAdmin, navigate]);
 
-  const logout = async () => { await signOut(); navigate({ to: "/login" }); };
+  const logout = async () => {
+    await signOut().catch(() => {});
+    navigate({ to: "/login", replace: true });
+  };
 
   if (loading || !isAdmin) {
     return <div className="min-h-screen flex items-center justify-center text-muted-foreground text-sm">Loading...</div>;
@@ -53,7 +56,11 @@ export function AdminShell({ title, children }: { title: string; children: React
           })}
         </nav>
         <div className="p-3 border-t border-border">
-          <button onClick={logout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-card hover:text-foreground">
+          <button
+            type="button"
+            onClick={() => void logout()}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-card hover:text-foreground"
+          >
             <LogOut className="w-4 h-4" /> Logout
           </button>
         </div>
@@ -61,8 +68,16 @@ export function AdminShell({ title, children }: { title: string; children: React
       <main className="flex-1 min-w-0">
         <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-card/40">
           <h1 className="text-xl font-bold">{title}</h1>
-          <div className="flex items-center gap-3">
-            <button className="w-9 h-9 rounded-full bg-card flex items-center justify-center relative">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={() => void logout()}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-card hover:bg-card-elevated text-sm font-semibold text-muted-foreground hover:text-foreground shrink-0"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
+            <button type="button" className="w-9 h-9 rounded-full bg-card flex items-center justify-center relative shrink-0">
               <Bell className="w-4 h-4" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
             </button>

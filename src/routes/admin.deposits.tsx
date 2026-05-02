@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Check, X } from "lucide-react";
+import { Fragment, useEffect, useState } from "react";
+import { Check, ChevronUp, Pencil, X } from "lucide-react";
 import { AdminShell, StatusPill } from "@/components/AdminShell";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -29,10 +29,28 @@ type BaseRow = {
 type ProfileRow = { id: string; full_name: string | null };
 type Row = BaseRow & { profile_name: string };
 
+type BankDraft = {
+  payer_account_name: string;
+  payer_account_number: string;
+  payer_iban: string;
+  requested_amount: string;
+};
+
+function draftFromRow(r: Row): BankDraft {
+  return {
+    payer_account_name: r.payer_account_name ?? "",
+    payer_account_number: r.payer_account_number ?? "",
+    payer_iban: r.payer_iban ?? "",
+    requested_amount: r.requested_amount != null ? String(r.requested_amount) : "",
+  };
+}
+
 function AdminDeposits() {
   const [rows, setRows] = useState<Row[]>([]);
   const [tab, setTab] = useState<"All" | Status>("pending");
   const [amounts, setAmounts] = useState<Record<string, string>>({});
+  const [expandedBankId, setExpandedBankId] = useState<string | null>(null);
+  const [bankDrafts, setBankDrafts] = useState<Record<string, BankDraft>>({});
 
   const load = async () => {
     const { data, error } = await supabase.from("deposits").select("*").order("created_at", { ascending: false });
@@ -64,6 +82,45 @@ function AdminDeposits() {
   }, []);
 
   const filtered = rows.filter((r) => tab === "All" || r.status === tab);
+
+  const toggleBankEdit = (r: Row) => {
+    if (r.method !== "bank") return;
+    if (expandedBankId === r.id) {
+      setExpandedBankId(null);
+      return;
+    }
+    setExpandedBankId(r.id);
+    setBankDrafts((prev) => (prev[r.id] ? prev : { ...prev, [r.id]: draftFromRow(r) }));
+  };
+
+  const saveBankDraft = async (r: Row) => {
+    const d = bankDrafts[r.id] ?? draftFromRow(r);
+    const rq = Number(d.requested_amount);
+    if (!d.payer_account_name.trim() || !d.payer_account_number.trim() || !d.payer_iban.trim()) {
+      toast.error("Fill payer name, account number, and IBAN");
+      return;
+    }
+    if (!rq || rq <= 0) {
+      toast.error("Requested amount must be greater than zero");
+      return;
+    }
+    const { error } = await supabase
+      .from("deposits")
+      .update({
+        payer_account_name: d.payer_account_name.trim(),
+        payer_account_number: d.payer_account_number.trim(),
+        payer_iban: d.payer_iban.trim(),
+        requested_amount: rq,
+      })
+      .eq("id", r.id)
+      .eq("status", "pending");
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Bank deposit details saved");
+    await load();
+  };
 
   const approve = async (r: Row) => {
     const amt = Number(amounts[r.id] ?? r.requested_amount ?? 0);
@@ -111,6 +168,7 @@ function AdminDeposits() {
                 <th className="text-left px-4 py-3">User</th>
                 <th className="text-left px-4 py-3">Method</th>
                 <th className="text-left px-4 py-3">Details</th>
+                <th className="text-left px-4 py-3 hidden lg:table-cell">Payer account #</th>
                 <th className="text-left px-4 py-3">Requested</th>
                 <th className="text-left px-4 py-3">Approve $</th>
                 <th className="text-left px-4 py-3">Status</th>
@@ -118,53 +176,148 @@ function AdminDeposits() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {filtered.map((r) => (
-                <tr key={r.id} className="hover:bg-card-elevated/40">
-                  <td className="px-4 py-3 font-medium">{r.profile_name}</td>
-                  <td className="px-4 py-3 capitalize">{r.method.replace("_", " ")}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground max-w-[280px]">
-                    <div className="truncate">
-                      {r.method === "gift_card" && `${r.gift_card_brand}: ${r.gift_card_code}`}
-                      {r.method === "usdt" && (r.usdt_tx_address || "—")}
-                      {r.method === "bank" && `${r.payer_account_name ?? "—"} · ${r.payer_account_number ?? "—"} · ${r.payer_iban ?? "—"}`}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">{r.requested_amount ? `$${Number(r.requested_amount).toFixed(2)}` : "—"}</td>
-                  <td className="px-4 py-3">
-                    {r.status === "pending" ? (
-                      <input
-                        type="number"
-                        placeholder={r.requested_amount ? String(r.requested_amount) : "0"}
-                        value={amounts[r.id] ?? ""}
-                        onChange={(e) => setAmounts({ ...amounts, [r.id]: e.target.value })}
-                        className="w-24 bg-input border border-border rounded-lg px-2 py-1 outline-none focus:border-primary"
-                      />
-                    ) : r.amount ? (
-                      `$${Number(r.amount).toFixed(2)}`
-                    ) : (
-                      "—"
+              {filtered.map((r) => {
+                const draft = bankDrafts[r.id] ?? draftFromRow(r);
+                const isBankExpanded = expandedBankId === r.id && r.method === "bank" && r.status === "pending";
+                return (
+                  <Fragment key={r.id}>
+                    <tr className="hover:bg-card-elevated/40">
+                      <td className="px-4 py-3 font-medium">{r.profile_name}</td>
+                      <td className="px-4 py-3 capitalize">{r.method.replace("_", " ")}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground max-w-[280px]">
+                        <div className="truncate">
+                          {r.method === "gift_card" && `${r.gift_card_brand}: ${r.gift_card_code}`}
+                          {r.method === "usdt" && (r.usdt_tx_address || "—")}
+                          {r.method === "bank" && (
+                            <span className="space-x-1">
+                              <span>{r.payer_account_name ?? "—"}</span>
+                              <span className="text-muted-foreground">· IBAN …{String(r.payer_iban ?? "").slice(-6)}</span>
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 hidden lg:table-cell font-mono text-xs">
+                        {r.method === "bank" ? (r.payer_account_number ?? "—") : "—"}
+                      </td>
+                      <td className="px-4 py-3">{r.requested_amount ? `$${Number(r.requested_amount).toFixed(2)}` : "—"}</td>
+                      <td className="px-4 py-3">
+                        {r.status === "pending" ? (
+                          <input
+                            type="number"
+                            placeholder={r.requested_amount ? String(r.requested_amount) : "0"}
+                            value={amounts[r.id] ?? ""}
+                            onChange={(e) => setAmounts({ ...amounts, [r.id]: e.target.value })}
+                            className="w-24 bg-input border border-border rounded-lg px-2 py-1 outline-none focus:border-primary"
+                          />
+                        ) : r.amount ? (
+                          `$${Number(r.amount).toFixed(2)}`
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <StatusPill status={r.status} />
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1 justify-end flex-wrap">
+                          {r.status === "pending" && r.method === "bank" && (
+                            <button
+                              type="button"
+                              onClick={() => toggleBankEdit(r)}
+                              className="p-1.5 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground"
+                              title="Edit payer bank details & requested amount"
+                            >
+                              {isBankExpanded ? <ChevronUp className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
+                            </button>
+                          )}
+                          {r.status === "pending" && (
+                            <>
+                              <button onClick={() => void approve(r)} className="p-1.5 rounded-lg bg-success/15 text-success hover:bg-success/25" title="Approve">
+                                <Check className="w-4 h-4" />
+                              </button>
+                              <button onClick={() => void reject(r)} className="p-1.5 rounded-lg bg-destructive/15 text-destructive hover:bg-destructive/25" title="Reject">
+                                <X className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                    {isBankExpanded && (
+                      <tr className="bg-muted/20 border-t border-border">
+                        <td colSpan={8} className="px-4 py-4">
+                          <p className="text-xs font-semibold text-primary-glow mb-3">Edit payer bank details & requested USD amount</p>
+                          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                            <label className="block text-xs">
+                              <span className="text-muted-foreground">Account holder name</span>
+                              <input
+                                value={draft.payer_account_name}
+                                onChange={(e) =>
+                                  setBankDrafts((prev) => ({
+                                    ...prev,
+                                    [r.id]: { ...draft, payer_account_name: e.target.value },
+                                  }))
+                                }
+                                className="mt-1 w-full bg-input border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
+                              />
+                            </label>
+                            <label className="block text-xs">
+                              <span className="text-muted-foreground">Account number</span>
+                              <input
+                                value={draft.payer_account_number}
+                                onChange={(e) =>
+                                  setBankDrafts((prev) => ({
+                                    ...prev,
+                                    [r.id]: { ...draft, payer_account_number: e.target.value },
+                                  }))
+                                }
+                                className="mt-1 w-full bg-input border border-border rounded-lg px-3 py-2 text-sm font-mono outline-none focus:border-primary"
+                              />
+                            </label>
+                            <label className="block text-xs sm:col-span-2 lg:col-span-2">
+                              <span className="text-muted-foreground">IBAN</span>
+                              <input
+                                value={draft.payer_iban}
+                                onChange={(e) =>
+                                  setBankDrafts((prev) => ({
+                                    ...prev,
+                                    [r.id]: { ...draft, payer_iban: e.target.value },
+                                  }))
+                                }
+                                className="mt-1 w-full bg-input border border-border rounded-lg px-3 py-2 text-sm font-mono outline-none focus:border-primary"
+                              />
+                            </label>
+                            <label className="block text-xs">
+                              <span className="text-muted-foreground">User-requested amount (USD)</span>
+                              <input
+                                type="number"
+                                value={draft.requested_amount}
+                                onChange={(e) =>
+                                  setBankDrafts((prev) => ({
+                                    ...prev,
+                                    [r.id]: { ...draft, requested_amount: e.target.value },
+                                  }))
+                                }
+                                className="mt-1 w-full bg-input border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
+                              />
+                            </label>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => void saveBankDraft(r)}
+                            className="mt-4 px-4 py-2 rounded-xl bg-gradient-primary text-sm font-semibold shadow-glow"
+                          >
+                            Save changes
+                          </button>
+                        </td>
+                      </tr>
                     )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <StatusPill status={r.status} />
-                  </td>
-                  <td className="px-4 py-3">
-                    {r.status === "pending" && (
-                      <div className="flex items-center gap-1 justify-end">
-                        <button onClick={() => void approve(r)} className="p-1.5 rounded-lg bg-success/15 text-success hover:bg-success/25" title="Approve">
-                          <Check className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => void reject(r)} className="p-1.5 rounded-lg bg-destructive/15 text-destructive hover:bg-destructive/25" title="Reject">
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                  </Fragment>
+                );
+              })}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="text-center py-10 text-muted-foreground text-sm">
+                  <td colSpan={8} className="text-center py-10 text-muted-foreground text-sm">
                     No requests
                   </td>
                 </tr>
