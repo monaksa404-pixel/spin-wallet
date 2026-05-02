@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Mail, Lock, Eye, EyeOff, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { isBootstrapAdminEmail } from "@/lib/admin-bootstrap";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
@@ -27,12 +28,12 @@ function LoginPage() {
       toast.error(error.message);
       return;
     }
-    // Check role
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", data.user!.id);
-    const isAdmin = (roles ?? []).some((r) => r.role === "admin");
+    const u = data.user!;
+    let isAdmin = isBootstrapAdminEmail(u.email);
+    if (!isAdmin) {
+      const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", u.id);
+      isAdmin = (roles ?? []).some((r) => r.role === "admin");
+    }
     navigate({ to: isAdmin ? "/admin" : "/" });
   };
 

@@ -6,7 +6,7 @@ import { BetSelector, useBet } from "@/components/BetSelector";
 import { useAuth } from "@/hooks/useAuth";
 import { useWallet } from "@/hooks/useWallet";
 import { useGamePlay } from "@/hooks/useGamePlay";
-import { STANDARD_PRIZES } from "@/lib/games";
+import { STANDARD_PRIZES, pickWeightedPrizeIndex } from "@/lib/games";
 
 export const Route = createFileRoute("/games/bonus-drop")({
   head: () => ({ meta: [{ title: "Bonus Drop — GameBonus" }] }),
@@ -29,7 +29,7 @@ function BonusDrop() {
     if ((wallet?.coins ?? 0) < bet) return;
     setDropping(true);
     setWinIdx(null);
-    const idx = Math.floor(Math.random() * slots.length);
+    const idx = pickWeightedPrizeIndex(slots);
     // animate coin: start middle top, end at slot center
     const slotW = 100 / slots.length;
     const targetX = slotW * idx + slotW / 2;

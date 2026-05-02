@@ -6,7 +6,7 @@ import { BetSelector, useBet } from "@/components/BetSelector";
 import { useAuth } from "@/hooks/useAuth";
 import { useWallet } from "@/hooks/useWallet";
 import { useGamePlay } from "@/hooks/useGamePlay";
-import { STANDARD_PRIZES } from "@/lib/games";
+import { STANDARD_PRIZES, pickWeightedPrizeIndex } from "@/lib/games";
 
 export const Route = createFileRoute("/games/luck-wheel")({
   head: () => ({ meta: [{ title: "Luck Wheel — GameBonus" }] }),
@@ -28,7 +28,7 @@ function LuckWheel() {
     if (spinning || busy) return;
     if ((wallet?.coins ?? 0) < bet) return;
     setSpinning(true);
-    const winIdx = Math.floor(Math.random() * slices.length);
+    const winIdx = pickWeightedPrizeIndex(slices);
     setRotation((r) => r + 360 * 6 + (360 - (winIdx * sliceAngle + sliceAngle / 2)));
     setTimeout(async () => {
       await play(bet, slices[winIdx]);

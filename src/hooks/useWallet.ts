@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export type Wallet = {
@@ -12,6 +12,8 @@ export type Wallet = {
 export function useWallet(userId: string | null | undefined) {
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [loading, setLoading] = useState(true);
+  // Supabase reuses channels by topic; multiple hooks (e.g. GameHeader + page) must not share one channel.
+  const listenerId = useRef(crypto.randomUUID());
 
   useEffect(() => {
     if (!userId) {
@@ -34,7 +36,7 @@ export function useWallet(userId: string | null | undefined) {
     load();
 
     const channel = supabase
-      .channel(`wallet:${userId}`)
+      .channel(`wallet:${userId}:${listenerId.current}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "wallets", filter: `user_id=eq.${userId}` },

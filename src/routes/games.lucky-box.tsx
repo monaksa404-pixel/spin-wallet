@@ -7,7 +7,7 @@ import { BetSelector, useBet } from "@/components/BetSelector";
 import { useAuth } from "@/hooks/useAuth";
 import { useWallet } from "@/hooks/useWallet";
 import { useGamePlay } from "@/hooks/useGamePlay";
-import { STANDARD_PRIZES } from "@/lib/games";
+import { STANDARD_PRIZES, pickWeightedPrizeIndex } from "@/lib/games";
 
 export const Route = createFileRoute("/games/lucky-box")({
   head: () => ({ meta: [{ title: "Lucky Box — GameBonus" }] }),
@@ -24,7 +24,7 @@ function LuckyBox() {
   const pickBox = async (idx: number) => {
     if (busy || revealed[idx] !== undefined) return;
     if ((wallet?.coins ?? 0) < bet) return;
-    const winIdx = Math.floor(Math.random() * STANDARD_PRIZES.length);
+    const winIdx = pickWeightedPrizeIndex(STANDARD_PRIZES);
     setRevealed((r) => ({ ...r, [idx]: winIdx }));
     await play(bet, STANDARD_PRIZES[winIdx]);
     setTimeout(() => setRevealed({}), 2200);

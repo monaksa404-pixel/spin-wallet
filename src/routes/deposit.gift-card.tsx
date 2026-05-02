@@ -1,9 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { Info, ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Info } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { PageHeader, StepIndicator } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/deposit/gift-card")({
@@ -11,92 +12,150 @@ export const Route = createFileRoute("/deposit/gift-card")({
   component: GiftCardDeposit,
 });
 
-type Card = { id: string; name: string; image?: string; bg: string };
+/** Files in `public/images/` — order puts common picks first; scroll for the rest */
+type GiftCardOption = { id: string; displayName: string; file: string };
 
-const cards: Card[] = [
-  { id: "razer", name: "Razer Gold", bg: "from-green-500 to-emerald-700" },
-  { id: "itunes", name: "iTunes", bg: "from-pink-500 to-purple-600" },
-  { id: "stc", name: "STC", bg: "from-purple-600 to-indigo-700" },
-  { id: "mobily", name: "Mobily", bg: "from-cyan-500 to-blue-600" },
-  { id: "lebara", name: "Lebara", bg: "from-orange-500 to-red-600" },
-  { id: "amazon", name: "Amazon", bg: "from-yellow-500 to-orange-600" },
-  { id: "google", name: "Google Play", bg: "from-emerald-500 to-teal-700" },
-  { id: "steam", name: "Steam", bg: "from-slate-700 to-slate-900" },
-  { id: "playstation", name: "PlayStation", bg: "from-blue-600 to-indigo-800" },
-  { id: "xbox", name: "Xbox", bg: "from-green-600 to-green-900" },
+const GIFT_CARDS: GiftCardOption[] = [
+  { id: "razer_gold", displayName: "Razer Gold", file: "razer_recent.png" },
+  { id: "itunes", displayName: "iTunes", file: "itunes.png" },
+  { id: "stc_pay", displayName: "STC Pay", file: "stc.png" },
+  { id: "mobily", displayName: "Mobily", file: "mobily.png" },
+  { id: "lebara", displayName: "LEBARA", file: "lebara_brand.png" },
+  { id: "google_play", displayName: "Google Play", file: "google_play_brand_v2.png" },
+  { id: "netflix", displayName: "Netflix", file: "netflix_brand.png" },
+  { id: "playstation", displayName: "PlayStation", file: "playstation.png" },
+  { id: "steam", displayName: "Steam", file: "steam.png" },
+  { id: "xbox", displayName: "Xbox", file: "xbox.png" },
+  { id: "nintendo", displayName: "Nintendo", file: "nintendo.png" },
+  { id: "gamestop", displayName: "GameStop", file: "game_stop.png" },
+  { id: "roblox", displayName: "Roblox", file: "roblox.png" },
+  { id: "pubg", displayName: "PUBG", file: "pubg.png" },
+  { id: "free_fire", displayName: "Free Fire", file: "freefire.png" },
+  { id: "riot", displayName: "Riot Games", file: "riot_games.png" },
+  { id: "du", displayName: "du", file: "du.png" },
+  { id: "friendi", displayName: "Friendi", file: "friendi.png" },
+  { id: "omantel", displayName: "Omantel", file: "omantel brand.png" },
 ];
 
-const PAGE = 5;
+function publicImageSrc(file: string): string {
+  return `/images/${encodeURIComponent(file)}`;
+}
 
 function GiftCardDeposit() {
   const [selected, setSelected] = useState<string | null>(null);
   const [code, setCode] = useState("");
-  const [page, setPage] = useState(0);
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
 
-  const totalPages = Math.max(1, Math.ceil(cards.length / PAGE));
-  const visible = cards.slice(page * PAGE, page * PAGE + PAGE);
+  useEffect(() => {
+    if (!loading && !user) navigate({ to: "/login" });
+  }, [loading, user, navigate]);
 
   const submit = async () => {
     if (!selected || !code.trim()) return;
     setBusy(true);
     const { data: u } = await supabase.auth.getUser();
-    if (!u.user) { toast.error("Please log in"); navigate({ to: "/login" }); return; }
-    const brand = cards.find((c) => c.id === selected)?.name ?? selected;
+    if (!u.user) {
+      toast.error("Please log in");
+      navigate({ to: "/login" });
+      setBusy(false);
+      return;
+    }
+    const card = GIFT_CARDS.find((c) => c.id === selected);
+    const brandLabel = card?.displayName ?? selected;
     const { error } = await supabase.from("deposits").insert({
       user_id: u.user.id,
       method: "gift_card",
-      gift_card_brand: brand,
+      gift_card_brand: brandLabel,
       gift_card_code: code.trim(),
     });
     setBusy(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Submitted! Pending review.");
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Submitted! Pending admin review.");
     navigate({ to: "/deposit/pending" });
   };
+
+  const selectedCard = selected ? GIFT_CARDS.find((c) => c.id === selected) : null;
 
   return (
     <MobileShell>
       <PageHeader title="Gift Card Deposit" back="/deposit" />
       <StepIndicator step={1} />
-      <div className="px-4 space-y-5">
+      <div className="px-4 space-y-5 pb-4">
         <div>
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm text-muted-foreground">Select Gift Card</p>
-            <p className="text-xs text-muted-foreground">{page + 1} / {totalPages}</p>
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <p className="text-sm font-medium text-muted-foreground">Select Gift Card</p>
+            <p className="text-[10px] text-muted-foreground whitespace-nowrap">Swipe → more</p>
           </div>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0} className="w-8 h-12 rounded-lg bg-card border border-border flex items-center justify-center disabled:opacity-30 hover:border-primary transition shrink-0" aria-label="Previous">
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <div className="grid grid-cols-5 gap-2 flex-1">
-              {visible.map((c) => (
-                <button key={c.id} onClick={() => setSelected(c.id)} className={`aspect-[3/4] rounded-xl overflow-hidden bg-gradient-to-br ${c.bg} flex items-center justify-center text-[10px] font-bold text-white p-1 text-center border-2 transition ${selected === c.id ? "border-primary-glow scale-105 shadow-glow" : "border-transparent"}`}>
-                  {c.image ? <img src={c.image} alt={c.name} className="w-full h-full object-cover" /> : c.name}
+
+          <div
+            className="flex gap-2.5 overflow-x-auto pb-3 pt-1 snap-x snap-mandatory [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]"
+            role="listbox"
+            aria-label="Gift card brands"
+          >
+            {GIFT_CARDS.map((c) => {
+              const active = selected === c.id;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  role="option"
+                  aria-selected={active}
+                  onClick={() => setSelected(c.id)}
+                  className={`snap-start shrink-0 w-[4.6rem] sm:w-[4.85rem] rounded-xl border-2 bg-card overflow-hidden transition shadow-card flex flex-col ${active ? "border-primary-glow shadow-glow ring-2 ring-primary/30" : "border-border hover:border-primary/50"}`}
+                >
+                  <div className="aspect-square bg-muted/40 flex items-center justify-center p-2">
+                    <img
+                      src={publicImageSrc(c.file)}
+                      alt=""
+                      className="max-h-full max-w-full object-contain"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </div>
+                  <p className="text-[9px] font-semibold text-center leading-tight px-1 py-1.5 line-clamp-2 text-foreground">
+                    {c.displayName}
+                  </p>
                 </button>
-              ))}
-              {Array.from({ length: PAGE - visible.length }).map((_, i) => (
-                <div key={`pad-${i}`} className="aspect-[3/4]" />
-              ))}
-            </div>
-            <button onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} className="w-8 h-12 rounded-lg bg-card border border-border flex items-center justify-center disabled:opacity-30 hover:border-primary transition shrink-0" aria-label="Next">
-              <ChevronRight className="w-4 h-4" />
-            </button>
+              );
+            })}
           </div>
+
+          {selectedCard && (
+            <p className="text-xs text-muted-foreground">
+              Selected: <span className="text-primary-glow font-semibold">{selectedCard.displayName}</span>
+            </p>
+          )}
         </div>
 
         <div>
           <label className="text-sm text-muted-foreground">Enter Gift Card Code</label>
-          <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="Enter gift card code" className="mt-2 w-full bg-input border border-border rounded-xl px-4 py-3 text-sm focus:border-primary outline-none" />
+          <input
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="Enter gift card code"
+            className="mt-2 w-full bg-input border border-border rounded-xl px-4 py-3 text-sm focus:border-primary outline-none"
+          />
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-3 flex gap-2 text-xs text-muted-foreground">
+        <div className="rounded-xl border border-primary/30 bg-primary/5 px-3 py-3 flex gap-2 text-xs text-muted-foreground">
           <Info className="w-4 h-4 text-primary-glow shrink-0 mt-0.5" />
-          <p>Code will be checked manually. Admin will set the value within 2 hours.</p>
+          <p>
+            Admin receives your <strong className="text-foreground">gift brand name</strong> and{" "}
+            <strong className="text-foreground">code</strong> to verify manually before crediting your balance.
+          </p>
         </div>
 
-        <button onClick={submit} disabled={!selected || !code.trim() || busy} className="w-full bg-gradient-primary py-4 rounded-xl font-semibold shadow-glow disabled:opacity-50 disabled:shadow-none">
+        <button
+          type="button"
+          onClick={() => void submit()}
+          disabled={!selected || !code.trim() || busy}
+          className="w-full bg-gradient-primary py-4 rounded-xl font-semibold shadow-glow disabled:opacity-50 disabled:shadow-none"
+        >
           {busy ? "Submitting..." : "Submit"}
         </button>
       </div>

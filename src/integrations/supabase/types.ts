@@ -23,6 +23,9 @@ export type Database = {
           gift_card_code: string | null
           id: string
           method: Database["public"]["Enums"]["deposit_method"]
+          payer_account_name: string | null
+          payer_account_number: string | null
+          payer_iban: string | null
           requested_amount: number | null
           reviewed_at: string | null
           status: Database["public"]["Enums"]["request_status"]
@@ -37,6 +40,9 @@ export type Database = {
           gift_card_code?: string | null
           id?: string
           method: Database["public"]["Enums"]["deposit_method"]
+          payer_account_name?: string | null
+          payer_account_number?: string | null
+          payer_iban?: string | null
           requested_amount?: number | null
           reviewed_at?: string | null
           status?: Database["public"]["Enums"]["request_status"]
@@ -51,6 +57,9 @@ export type Database = {
           gift_card_code?: string | null
           id?: string
           method?: Database["public"]["Enums"]["deposit_method"]
+          payer_account_name?: string | null
+          payer_account_number?: string | null
+          payer_iban?: string | null
           requested_amount?: number | null
           reviewed_at?: string | null
           status?: Database["public"]["Enums"]["request_status"]

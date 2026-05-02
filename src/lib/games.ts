@@ -56,3 +56,27 @@ export const fmtCurrency = (usdt: number, code: CurrencyCode) => {
 };
 
 export const COINS_PER_USDT = 100;
+
+// Weighted distribution for game results (percent).
+// Big prizes are intentionally rare: 5X + 20% + 50% = 3%.
+const PRIZE_WEIGHTS: Record<string, number> = {
+  "0X": 35,
+  "1X": 30,
+  "5%": 20,
+  "10%": 12,
+  "20%": 1,
+  "50%": 1,
+  "5X": 1,
+};
+
+export function pickWeightedPrizeIndex(prizes: Prize[] = STANDARD_PRIZES): number {
+  const weighted = prizes.map((p) => PRIZE_WEIGHTS[p.label] ?? 0);
+  const total = weighted.reduce((s, w) => s + Math.max(0, w), 0);
+  if (total <= 0) return 0;
+  let roll = Math.random() * total;
+  for (let i = 0; i < weighted.length; i++) {
+    roll -= Math.max(0, weighted[i]);
+    if (roll < 0) return i;
+  }
+  return weighted.length - 1;
+}

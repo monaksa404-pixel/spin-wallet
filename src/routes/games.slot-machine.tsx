@@ -6,7 +6,7 @@ import { BetSelector, useBet } from "@/components/BetSelector";
 import { useAuth } from "@/hooks/useAuth";
 import { useWallet } from "@/hooks/useWallet";
 import { useGamePlay } from "@/hooks/useGamePlay";
-import { STANDARD_PRIZES } from "@/lib/games";
+import { STANDARD_PRIZES, pickWeightedPrizeIndex } from "@/lib/games";
 
 export const Route = createFileRoute("/games/slot-machine")({
   head: () => ({ meta: [{ title: "Slot Machine — GameBonus" }] }),
@@ -28,7 +28,7 @@ function SlotMachine() {
     if (spinning || busy) return;
     if ((wallet?.coins ?? 0) < bet) return;
     setSpinning(true);
-    const winIdx = Math.floor(Math.random() * STANDARD_PRIZES.length);
+    const winIdx = pickWeightedPrizeIndex(STANDARD_PRIZES);
     // visual ticker
     let ticks = 0;
     const interval = setInterval(() => {

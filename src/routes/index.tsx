@@ -4,6 +4,9 @@ import { Bell, Menu, Wallet, Gift, AlarmClock, ArrowDownToLine, ArrowUpFromLine,
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/hooks/useAuth";
 import { useWallet } from "@/hooks/useWallet";
+import { useCurrency } from "@/hooks/useCurrency";
+import { CurrencySelect } from "@/components/CurrencySelect";
+import { fmtCurrency } from "@/lib/games";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -21,6 +24,7 @@ function HomePage() {
   const { user, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { wallet } = useWallet(user?.id);
+  const { currency } = useCurrency();
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/login" });
@@ -49,8 +53,10 @@ function HomePage() {
           </div>
           <div className="flex-1">
             <p className="text-xs text-muted-foreground uppercase tracking-wide">Total Balance</p>
-            <p className="text-3xl font-bold">{fmt(wallet?.balance ?? 0)}</p>
+            <p className="text-3xl font-bold">{fmtCurrency(wallet?.balance ?? 0, currency)}</p>
+            <p className="text-[10px] text-muted-foreground mt-1">{fmt(wallet?.balance ?? 0)} USDT</p>
           </div>
+          <CurrencySelect />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
