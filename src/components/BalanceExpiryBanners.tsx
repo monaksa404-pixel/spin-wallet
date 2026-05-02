@@ -147,22 +147,22 @@ export function DepositDeadlineBanner(props: { deadlineAt: string | null | undef
   const timeLabel = new Date(deadlineAt).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 
   return (
-    <div className="sticky top-0 z-40 w-full border-b-2 border-amber-600/60 bg-amber-950/95 backdrop-blur shadow-[0_2px_12px_rgba(245,158,11,0.3)]">
+    <div className="sticky top-0 z-40 w-full border-b-2 border-red-700/60 bg-red-950/95 backdrop-blur shadow-[0_2px_12px_rgba(220,38,38,0.35)]">
       <div className="max-w-md mx-auto flex items-stretch gap-3 px-3 py-2.5">
         <div className="flex items-center justify-center shrink-0">
-          <div className="w-10 h-10 rounded-full bg-amber-900/60 border-2 border-amber-500 flex items-center justify-center">
-            <AlarmClock className="w-5 h-5 text-amber-300" strokeWidth={2} />
+          <div className="w-10 h-10 rounded-full bg-red-900/60 border-2 border-red-500 flex items-center justify-center">
+            <AlarmClock className="w-5 h-5 text-red-300" strokeWidth={2} />
           </div>
         </div>
         <div className="flex-1 min-w-0 flex flex-col justify-center">
-          <p className="text-amber-300 font-extrabold text-xs tracking-wide uppercase leading-tight">Deposit Window</p>
-          <p className="text-[11px] text-amber-100/70 leading-snug">
-            Deposit before <span className="font-semibold text-amber-200">{timeLabel}</span> or balance may expire.
+          <p className="text-red-300 font-extrabold text-xs tracking-wide uppercase leading-tight">Deposit Window</p>
+          <p className="text-[11px] text-red-100/70 leading-snug">
+            Deposit before <span className="font-semibold text-red-200">{timeLabel}</span> or balance may expire.
           </p>
         </div>
-        <div className="flex flex-col justify-center items-end shrink-0 border-l-2 border-dashed border-amber-700/60 pl-3">
-          <p className="text-[9px] font-bold text-amber-400 uppercase tracking-widest">Expires in</p>
-          <p className="font-mono font-black text-amber-300 text-base tabular-nums leading-tight tracking-wider">
+        <div className="flex flex-col justify-center items-end shrink-0 border-l-2 border-dashed border-red-700/60 pl-3">
+          <p className="text-[9px] font-bold text-red-400 uppercase tracking-widest">Expires in</p>
+          <p className="font-mono font-black text-red-300 text-base tabular-nums leading-tight tracking-wider">
             {countdownLabel}
           </p>
         </div>
