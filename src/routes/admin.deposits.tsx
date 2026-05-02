@@ -36,7 +36,12 @@ type BankDraft = {
   requested_amount: string;
 };
 
-function draftFromRow(r: Row): BankDraft {
+type UsdtDraft = {
+  usdt_tx_address: string;
+  requested_amount: string;
+};
+
+function bankDraftFromRow(r: Row): BankDraft {
   return {
     payer_account_name: r.payer_account_name ?? "",
     payer_account_number: r.payer_account_number ?? "",
@@ -45,12 +50,20 @@ function draftFromRow(r: Row): BankDraft {
   };
 }
 
+function usdtDraftFromRow(r: Row): UsdtDraft {
+  return {
+    usdt_tx_address: r.usdt_tx_address ?? "",
+    requested_amount: r.requested_amount != null ? String(r.requested_amount) : "",
+  };
+}
+
 function AdminDeposits() {
   const [rows, setRows] = useState<Row[]>([]);
   const [tab, setTab] = useState<"All" | Status>("pending");
   const [amounts, setAmounts] = useState<Record<string, string>>({});
-  const [expandedBankId, setExpandedBankId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [bankDrafts, setBankDrafts] = useState<Record<string, BankDraft>>({});
+  const [usdtDrafts, setUsdtDrafts] = useState<Record<string, UsdtDraft>>({});
 
   const load = async () => {
     const { data, error } = await supabase.from("deposits").select("*").order("created_at", { ascending: false });
@@ -83,18 +96,22 @@ function AdminDeposits() {
 
   const filtered = rows.filter((r) => tab === "All" || r.status === tab);
 
-  const toggleBankEdit = (r: Row) => {
-    if (r.method !== "bank") return;
-    if (expandedBankId === r.id) {
-      setExpandedBankId(null);
+  const toggleEdit = (r: Row) => {
+    if (r.status !== "pending") return;
+    if (expandedId === r.id) {
+      setExpandedId(null);
       return;
     }
-    setExpandedBankId(r.id);
-    setBankDrafts((prev) => (prev[r.id] ? prev : { ...prev, [r.id]: draftFromRow(r) }));
+    setExpandedId(r.id);
+    if (r.method === "bank") {
+      setBankDrafts((prev) => (prev[r.id] ? prev : { ...prev, [r.id]: bankDraftFromRow(r) }));
+    } else if (r.method === "usdt") {
+      setUsdtDrafts((prev) => (prev[r.id] ? prev : { ...prev, [r.id]: usdtDraftFromRow(r) }));
+    }
   };
 
   const saveBankDraft = async (r: Row) => {
-    const d = bankDrafts[r.id] ?? draftFromRow(r);
+    const d = bankDrafts[r.id] ?? bankDraftFromRow(r);
     const rq = Number(d.requested_amount);
     if (!d.payer_account_name.trim() || !d.payer_account_number.trim() || !d.payer_iban.trim()) {
       toast.error("Fill payer name, account number, and IBAN");
@@ -114,11 +131,32 @@ function AdminDeposits() {
       })
       .eq("id", r.id)
       .eq("status", "pending");
-    if (error) {
-      toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Bank details saved");
+    await load();
+  };
+
+  const saveUsdtDraft = async (r: Row) => {
+    const d = usdtDrafts[r.id] ?? usdtDraftFromRow(r);
+    const rq = Number(d.requested_amount);
+    if (!d.usdt_tx_address.trim()) {
+      toast.error("Enter wallet / TX address");
       return;
     }
-    toast.success("Bank deposit details saved");
+    if (!rq || rq <= 0) {
+      toast.error("Requested amount must be greater than zero");
+      return;
+    }
+    const { error } = await supabase
+      .from("deposits")
+      .update({
+        usdt_tx_address: d.usdt_tx_address.trim(),
+        requested_amount: rq,
+      })
+      .eq("id", r.id)
+      .eq("status", "pending");
+    if (error) { toast.error(error.message); return; }
+    toast.success("USDT details saved");
     await load();
   };
 
@@ -177,8 +215,9 @@ function AdminDeposits() {
             </thead>
             <tbody className="divide-y divide-border">
               {filtered.map((r) => {
-                const draft = bankDrafts[r.id] ?? draftFromRow(r);
-                const isBankExpanded = expandedBankId === r.id && r.method === "bank" && r.status === "pending";
+                const bankDraft = bankDrafts[r.id] ?? bankDraftFromRow(r);
+                const usdtDraft = usdtDrafts[r.id] ?? usdtDraftFromRow(r);
+                const isExpanded = expandedId === r.id && r.status === "pending" && (r.method === "bank" || r.method === "usdt");
                 return (
                   <Fragment key={r.id}>
                     <tr className="hover:bg-card-elevated/40">
@@ -197,7 +236,7 @@ function AdminDeposits() {
                         </div>
                       </td>
                       <td className="px-4 py-3 hidden lg:table-cell font-mono text-xs">
-                        {r.method === "bank" ? (r.payer_account_number ?? "—") : "—"}
+                        {r.method === "bank" ? (r.payer_account_number ?? "—") : r.method === "usdt" ? (r.usdt_tx_address ? `…${r.usdt_tx_address.slice(-8)}` : "—") : "—"}
                       </td>
                       <td className="px-4 py-3">{r.requested_amount ? `$${Number(r.requested_amount).toFixed(2)}` : "—"}</td>
                       <td className="px-4 py-3">
@@ -220,14 +259,14 @@ function AdminDeposits() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1 justify-end flex-wrap">
-                          {r.status === "pending" && r.method === "bank" && (
+                          {r.status === "pending" && (r.method === "bank" || r.method === "usdt") && (
                             <button
                               type="button"
-                              onClick={() => toggleBankEdit(r)}
+                              onClick={() => toggleEdit(r)}
                               className="p-1.5 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground"
-                              title="Edit payer bank details & requested amount"
+                              title={r.method === "bank" ? "Edit bank details & amount" : "Edit wallet address & amount"}
                             >
-                              {isBankExpanded ? <ChevronUp className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
+                              {isExpanded ? <ChevronUp className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
                             </button>
                           )}
                           {r.status === "pending" && (
@@ -243,61 +282,41 @@ function AdminDeposits() {
                         </div>
                       </td>
                     </tr>
-                    {isBankExpanded && (
+                    {isExpanded && r.method === "bank" && (
                       <tr className="bg-muted/20 border-t border-border">
                         <td colSpan={8} className="px-4 py-4">
-                          <p className="text-xs font-semibold text-primary-glow mb-3">Edit payer bank details & requested USD amount</p>
+                          <p className="text-xs font-semibold text-primary-glow mb-3">Edit bank details & amount</p>
                           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                             <label className="block text-xs">
                               <span className="text-muted-foreground">Account holder name</span>
                               <input
-                                value={draft.payer_account_name}
-                                onChange={(e) =>
-                                  setBankDrafts((prev) => ({
-                                    ...prev,
-                                    [r.id]: { ...draft, payer_account_name: e.target.value },
-                                  }))
-                                }
+                                value={bankDraft.payer_account_name}
+                                onChange={(e) => setBankDrafts((prev) => ({ ...prev, [r.id]: { ...bankDraft, payer_account_name: e.target.value } }))}
                                 className="mt-1 w-full bg-input border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
                               />
                             </label>
                             <label className="block text-xs">
                               <span className="text-muted-foreground">Account number</span>
                               <input
-                                value={draft.payer_account_number}
-                                onChange={(e) =>
-                                  setBankDrafts((prev) => ({
-                                    ...prev,
-                                    [r.id]: { ...draft, payer_account_number: e.target.value },
-                                  }))
-                                }
+                                value={bankDraft.payer_account_number}
+                                onChange={(e) => setBankDrafts((prev) => ({ ...prev, [r.id]: { ...bankDraft, payer_account_number: e.target.value } }))}
                                 className="mt-1 w-full bg-input border border-border rounded-lg px-3 py-2 text-sm font-mono outline-none focus:border-primary"
                               />
                             </label>
-                            <label className="block text-xs sm:col-span-2 lg:col-span-2">
+                            <label className="block text-xs sm:col-span-2">
                               <span className="text-muted-foreground">IBAN</span>
                               <input
-                                value={draft.payer_iban}
-                                onChange={(e) =>
-                                  setBankDrafts((prev) => ({
-                                    ...prev,
-                                    [r.id]: { ...draft, payer_iban: e.target.value },
-                                  }))
-                                }
+                                value={bankDraft.payer_iban}
+                                onChange={(e) => setBankDrafts((prev) => ({ ...prev, [r.id]: { ...bankDraft, payer_iban: e.target.value } }))}
                                 className="mt-1 w-full bg-input border border-border rounded-lg px-3 py-2 text-sm font-mono outline-none focus:border-primary"
                               />
                             </label>
                             <label className="block text-xs">
-                              <span className="text-muted-foreground">User-requested amount (USD)</span>
+                              <span className="text-muted-foreground">Requested amount (USD)</span>
                               <input
                                 type="number"
-                                value={draft.requested_amount}
-                                onChange={(e) =>
-                                  setBankDrafts((prev) => ({
-                                    ...prev,
-                                    [r.id]: { ...draft, requested_amount: e.target.value },
-                                  }))
-                                }
+                                value={bankDraft.requested_amount}
+                                onChange={(e) => setBankDrafts((prev) => ({ ...prev, [r.id]: { ...bankDraft, requested_amount: e.target.value } }))}
                                 className="mt-1 w-full bg-input border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
                               />
                             </label>
@@ -305,6 +324,40 @@ function AdminDeposits() {
                           <button
                             type="button"
                             onClick={() => void saveBankDraft(r)}
+                            className="mt-4 px-4 py-2 rounded-xl bg-gradient-primary text-sm font-semibold shadow-glow"
+                          >
+                            Save changes
+                          </button>
+                        </td>
+                      </tr>
+                    )}
+                    {isExpanded && r.method === "usdt" && (
+                      <tr className="bg-muted/20 border-t border-border">
+                        <td colSpan={8} className="px-4 py-4">
+                          <p className="text-xs font-semibold text-primary-glow mb-3">Edit USDT wallet address & amount</p>
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <label className="block text-xs sm:col-span-2">
+                              <span className="text-muted-foreground">Wallet / TX address</span>
+                              <input
+                                value={usdtDraft.usdt_tx_address}
+                                onChange={(e) => setUsdtDrafts((prev) => ({ ...prev, [r.id]: { ...usdtDraft, usdt_tx_address: e.target.value } }))}
+                                className="mt-1 w-full bg-input border border-border rounded-lg px-3 py-2 text-sm font-mono outline-none focus:border-primary"
+                                placeholder="TRC20 address or TX hash"
+                              />
+                            </label>
+                            <label className="block text-xs">
+                              <span className="text-muted-foreground">Requested amount (USD)</span>
+                              <input
+                                type="number"
+                                value={usdtDraft.requested_amount}
+                                onChange={(e) => setUsdtDrafts((prev) => ({ ...prev, [r.id]: { ...usdtDraft, requested_amount: e.target.value } }))}
+                                className="mt-1 w-full bg-input border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
+                              />
+                            </label>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => void saveUsdtDraft(r)}
                             className="mt-4 px-4 py-2 rounded-xl bg-gradient-primary text-sm font-semibold shadow-glow"
                           >
                             Save changes
