@@ -145,7 +145,7 @@ function GiftCardDeposit() {
           <label className="text-sm text-muted-foreground">Enter Gift Card Code</label>
           <input
             value={code}
-            onChange={(e) => setCode(e.target.value)}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
             placeholder="Enter gift card code"
             className="mt-2 w-full bg-input border border-border rounded-xl px-4 py-3 text-sm focus:border-primary outline-none"
           />
