@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronRight, CreditCard, Coins, Landmark } from "lucide-react";
+import { ChevronRight, CreditCard, Coins, Flame, Landmark } from "lucide-react";
 import { useEffect, useState } from "react";
 import { MobileShell } from "@/components/MobileShell";
 import { PageHeader } from "@/components/PageHeader";
@@ -13,9 +13,9 @@ export const Route = createFileRoute("/deposit/")({
 });
 
 const methods = [
-  { to: "/deposit/gift-card", icon: CreditCard, title: "Gift Card", desc: "Deposit with Gift Card" },
-  { to: "/deposit/usdt", icon: Coins, title: "USDT (TRC20)", desc: "Deposit with USDT" },
-  { to: "/deposit/bank", icon: Landmark, title: "Al Rajhi Bank", desc: "Deposit with Bank" },
+  { to: "/deposit/gift-card", icon: CreditCard, title: "Gift Card", desc: "Deposit with Gift Card", hot: true },
+  { to: "/deposit/usdt", icon: Coins, title: "USDT (TRC20)", desc: "Deposit with USDT", hot: false },
+  { to: "/deposit/bank", icon: Landmark, title: "Al Rajhi Bank", desc: "Deposit with Bank", hot: false },
 ] as const;
 
 type DepositRow = {
@@ -91,14 +91,21 @@ function DepositPage() {
           <div className="space-y-3">
             {methods.map((m) => (
               <Link key={m.to} to={m.to} className="flex items-center gap-3 bg-card border border-border rounded-2xl p-4 hover:border-primary transition">
-                <div className="w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center">
+                <div className="w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center shrink-0">
                   <m.icon className="w-6 h-6" />
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <p className="font-semibold">{m.title}</p>
                   <p className="text-xs text-muted-foreground">{m.desc}</p>
                 </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                <div className="flex items-center gap-1 shrink-0">
+                  {m.hot ? (
+                    <span className="flex items-center justify-center rounded-lg bg-orange-500/15 p-1 ring-1 ring-orange-400/40" title="Popular">
+                      <Flame className="w-6 h-6 text-orange-400 fill-orange-500 stroke-orange-700/80" strokeWidth={1.35} aria-hidden />
+                    </span>
+                  ) : null}
+                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                </div>
               </Link>
             ))}
           </div>

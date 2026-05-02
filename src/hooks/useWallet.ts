@@ -51,28 +51,61 @@ async function computeDepositDeadlineFallback(userId: string, walletRow: Wallet 
   return isoDeadlineStillAhead(iso) ? iso : null;
 }
 
+function num(v: unknown): number {
+  const n = typeof v === "number" ? v : Number(v);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function coerceWalletNumeric(row: Wallet | null): Wallet | null {
+  if (!row) return null;
+  return {
+    ...row,
+    balance: num(row.balance),
+    bonus_balance: num(row.bonus_balance),
+    pending_balance: num(row.pending_balance),
+    coins: num(row.coins),
+    expired_balance_snapshot:
+      row.expired_balance_snapshot == null ? row.expired_balance_snapshot : num(row.expired_balance_snapshot),
+  };
+}
+
 export function useWallet(userId: string | null | undefined) {
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [fallbackDeadlineAt, setFallbackDeadlineAt] = useState<string | null>(null);
+  const [hasPendingDeposit, setHasPendingDeposit] = useState(false);
   const [loading, setLoading] = useState(true);
   const listenerId = useRef(crypto.randomUUID());
+  const refreshDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  /**
+   * Deposit countdown: prefer DB rolling deadline whenever it is still in the future (set on pending submit).
+   * If DB deadline missing but user still has pending deposits, use created_at + admin hours fallback.
+   */
   const depositDeadlineAt = useMemo(() => {
     const db = wallet?.balance_deadline_at ?? null;
     if (isoDeadlineStillAhead(db)) return db;
+    if (!hasPendingDeposit) return null;
     const fb = fallbackDeadlineAt ?? null;
-    if (isoDeadlineStillAhead(fb)) return fb;
-    return null;
-  }, [wallet?.balance_deadline_at, fallbackDeadlineAt]);
+    return isoDeadlineStillAhead(fb) ? fb : null;
+  }, [hasPendingDeposit, wallet?.balance_deadline_at, fallbackDeadlineAt]);
 
   const refreshWallet = useCallback(async () => {
     if (!userId) return;
     await supabase.rpc("wallet_apply_balance_expiry").catch(() => {});
-    const { data } = await supabase.from("wallets").select("*").eq("user_id", userId).maybeSingle();
-    const row = data as Wallet | null;
+
+    const [walletRes, pendingRes] = await Promise.all([
+      supabase.from("wallets").select("*").eq("user_id", userId).maybeSingle(),
+      supabase.from("deposits").select("id").eq("user_id", userId).eq("status", "pending").limit(1),
+    ]);
+
+    const row = coerceWalletNumeric(walletRes.data as Wallet | null);
+    const pending = !pendingRes.error && (pendingRes.data?.length ?? 0) > 0;
+
     setWallet(row);
+    setHasPendingDeposit(pending);
     setLoading(false);
-    const fb = await computeDepositDeadlineFallback(userId, row);
+
+    const fb = pending ? await computeDepositDeadlineFallback(userId, row) : null;
     setFallbackDeadlineAt(fb);
   }, [userId]);
 
@@ -80,6 +113,7 @@ export function useWallet(userId: string | null | undefined) {
     if (!userId) {
       setWallet(null);
       setFallbackDeadlineAt(null);
+      setHasPendingDeposit(false);
       setLoading(false);
       return;
     }
@@ -107,10 +141,34 @@ export function useWallet(userId: string | null | undefined) {
       )
       .subscribe();
 
+    const pollId = window.setInterval(() => void refreshWallet(), 45_000);
+
     return () => {
       cancelled = true;
+      window.clearInterval(pollId);
       supabase.removeChannel(walletChannel);
       supabase.removeChannel(depositsChannel);
+    };
+  }, [userId, refreshWallet]);
+
+  useEffect(() => {
+    if (!userId) return;
+    const scheduleRefresh = () => {
+      if (refreshDebounceRef.current != null) clearTimeout(refreshDebounceRef.current);
+      refreshDebounceRef.current = setTimeout(() => {
+        refreshDebounceRef.current = null;
+        void refreshWallet();
+      }, 400);
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") scheduleRefresh();
+    };
+    window.addEventListener("focus", scheduleRefresh);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", scheduleRefresh);
+      document.removeEventListener("visibilitychange", onVisibility);
+      if (refreshDebounceRef.current != null) clearTimeout(refreshDebounceRef.current);
     };
   }, [userId, refreshWallet]);
 
@@ -122,5 +180,5 @@ export function useWallet(userId: string | null | undefined) {
     return () => window.clearInterval(id);
   }, [userId, depositDeadlineAt, refreshWallet]);
 
-  return { wallet, loading, refreshWallet, depositDeadlineAt };
+  return { wallet, loading, refreshWallet, depositDeadlineAt, hasPendingDeposit };
 }

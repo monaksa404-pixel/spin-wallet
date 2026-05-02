@@ -115,26 +115,16 @@ function GiftCardDeposit() {
                   role="option"
                   aria-selected={active}
                   onClick={() => setSelected(c.id)}
-                  className={`snap-start shrink-0 w-[4.6rem] sm:w-[4.85rem] rounded-xl border-2 bg-card overflow-hidden transition shadow-card flex flex-col ${active ? "border-primary-glow shadow-glow ring-2 ring-primary/30" : "border-border hover:border-primary/50"}`}
+                  className={`snap-start shrink-0 w-[5.35rem] sm:w-[5.65rem] rounded-xl border-2 bg-card overflow-hidden transition shadow-card flex flex-col ${active ? "border-primary-glow shadow-glow ring-2 ring-primary/30" : "border-border hover:border-primary/50"}`}
                 >
-                  <div className="relative aspect-square w-full shrink-0 bg-muted/40 rounded-t-xl overflow-hidden">
-                    <div className="absolute inset-0 z-0 flex items-start justify-start p-1.5 pr-10 pt-1">
-                      <img
-                        src={publicImageSrc(c.file)}
-                        alt=""
-                        className="max-h-[88%] max-w-[88%] object-contain object-left-top relative z-0"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    </div>
-                    {/* Emoji renders reliably across browsers; sits above logo art */}
-                    <span
-                      className="absolute top-0 right-0 z-[100] flex h-9 min-w-[2.25rem] items-center justify-center rounded-bl-lg bg-gradient-to-br from-orange-500 to-red-600 px-1 text-[20px] leading-none shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_2px_8px_rgba(0,0,0,0.5)] pointer-events-none select-none"
-                      title="Popular"
-                      aria-hidden
-                    >
-                      🔥
-                    </span>
+                  <div className="aspect-square w-full shrink-0 bg-muted/40 rounded-t-xl overflow-hidden flex items-center justify-center p-2">
+                    <img
+                      src={publicImageSrc(c.file)}
+                      alt=""
+                      className="max-h-full max-w-full h-auto w-auto object-contain object-center"
+                      loading="lazy"
+                      decoding="async"
+                    />
                   </div>
                   <p className="text-[9px] font-semibold text-center leading-tight px-1 py-1.5 line-clamp-2 text-foreground">
                     {c.displayName}

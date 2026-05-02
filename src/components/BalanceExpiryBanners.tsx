@@ -1,4 +1,4 @@
-import { AlarmClock, FileX2, Info, Shield } from "lucide-react";
+import { AlarmClock, Info, Shield } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 
@@ -22,34 +22,74 @@ export function BalanceExpiryTopBanner(props: {
   balanceExpiredAt: string | null | undefined;
 }) {
   const { expiredSnapshot, missedDeadlineAt, balanceExpiredAt } = props;
+  const [howOpen, setHowOpen] = useState(false);
   if (!expiredSnapshot || expiredSnapshot <= 0) return null;
 
   const cutoff = missedDeadlineAt ?? balanceExpiredAt;
+  const amt = `$${Number(expiredSnapshot).toFixed(2)}`;
 
   return (
-    <div className="rounded-xl border-2 border-red-600 bg-red-950/90 px-3 py-3 shadow-lg">
-      <div className="flex items-stretch gap-2">
-        <div className="flex items-center justify-center shrink-0 w-11 rounded-lg bg-red-900/80 border border-red-500/50">
-          <AlarmClock className="w-6 h-6 text-red-400" strokeWidth={2} />
+    <>
+      <div className="rounded-xl border-2 border-red-600 bg-red-950/90 px-3 py-3 shadow-lg">
+        <div className="flex items-stretch gap-2">
+          <div className="flex items-center justify-center shrink-0 w-11 rounded-lg bg-red-900/80 border border-red-500/50">
+            <AlarmClock className="w-6 h-6 text-red-400" strokeWidth={2} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-red-400 font-extrabold text-sm tracking-wide">Balance expired</p>
+            <p className="text-xs text-white/90 mt-1 leading-snug">
+              No deposit was approved before{" "}
+              <span className="text-red-400 font-semibold">{formatClock(cutoff)}</span>. Your{" "}
+              <span className="text-red-400 font-semibold">{amt}</span> in-app balance expired and is no longer
+              available.
+            </p>
+            <p className="text-[10px] text-red-300/95 mt-1.5 font-medium">
+              {formatClock(cutoff)} · {formatDate(cutoff)}
+            </p>
+          </div>
+          <div className="hidden sm:flex flex-col justify-center items-end shrink-0 border-l border-dashed border-red-600/70 pl-3">
+            <p className="text-[10px] font-bold text-red-400 uppercase tracking-wider">Expired at</p>
+            <p className="text-lg font-black text-red-400 leading-none">{formatClock(cutoff)}</p>
+            <p className="text-[10px] text-white/70 mt-0.5">{formatDate(cutoff)}</p>
+          </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-red-400 font-extrabold text-sm tracking-wide">TIME EXPIRED!</p>
-          <p className="text-xs text-white/90 mt-1 leading-snug">
-            You didn&apos;t get a deposit approved before{" "}
-            <span className="text-red-400 font-semibold">{formatClock(cutoff)}</span>. Your balance has{" "}
-            <span className="text-red-400 font-semibold">expired</span>.
-          </p>
-          <p className="sm:hidden text-[10px] text-red-300/95 mt-1.5 font-medium">
-            Expired at {formatClock(cutoff)} · {formatDate(cutoff)}
-          </p>
-        </div>
-        <div className="hidden sm:flex flex-col justify-center items-end shrink-0 border-l border-dashed border-red-600/70 pl-3">
-          <p className="text-[10px] font-bold text-red-400 uppercase tracking-wider">Expired at</p>
-          <p className="text-lg font-black text-red-400 leading-none">{formatClock(cutoff)}</p>
-          <p className="text-[10px] text-white/70 mt-0.5">{formatDate(cutoff)}</p>
+        <div className="mt-3 pt-2 border-t border-red-700/35 flex justify-end">
+          <button
+            type="button"
+            onClick={() => setHowOpen(true)}
+            className="flex items-center gap-1 text-[11px] font-semibold text-white bg-red-900/55 hover:bg-red-900 border border-red-500/45 rounded-lg px-2.5 py-1.5"
+          >
+            <Info className="w-3.5 h-3.5 shrink-0" />
+            How it works
+          </button>
         </div>
       </div>
-    </div>
+      {howOpen && (
+        <button
+          type="button"
+          className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm"
+          aria-label="Close"
+          onClick={() => setHowOpen(false)}
+        />
+      )}
+      {howOpen && (
+        <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] w-[min(92vw,22rem)] rounded-2xl border border-border bg-card p-5 shadow-2xl">
+          <p className="font-bold text-lg">How the deposit window works</p>
+          <ul className="mt-3 text-sm text-muted-foreground space-y-2 list-disc pl-4">
+            <li>When you submit a deposit request, a countdown starts based on the hours set by admin (default 10h).</li>
+            <li>If an admin approves your deposit before the deadline, your balance is safe and timers clear.</li>
+            <li>If the time runs out without an approved deposit, your in-app balance can be expired per policy.</li>
+          </ul>
+          <button
+            type="button"
+            className="mt-4 w-full py-3 rounded-xl bg-gradient-primary font-semibold text-sm shadow-glow"
+            onClick={() => setHowOpen(false)}
+          >
+            OK
+          </button>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -100,72 +140,6 @@ export function DepositDeadlineBanner(props: { deadlineAt: string | null | undef
         </div>
       </div>
     </div>
-  );
-}
-
-export function BalanceExpiryBottomBar(props: {
-  expiredSnapshot: number | null | undefined;
-  missedDeadlineAt: string | null | undefined;
-}) {
-  const [howOpen, setHowOpen] = useState(false);
-  const { expiredSnapshot, missedDeadlineAt } = props;
-  if (!expiredSnapshot || expiredSnapshot <= 0) return null;
-
-  const amt = `$${Number(expiredSnapshot).toFixed(2)}`;
-  const clock = formatClock(missedDeadlineAt);
-
-  return (
-    <>
-      <div className="fixed bottom-[4.25rem] left-1/2 -translate-x-1/2 w-full max-w-md z-[35] px-3 pointer-events-none">
-        <div className="pointer-events-auto rounded-xl border-2 border-red-600 bg-red-950/95 backdrop-blur px-3 py-2.5 shadow-2xl flex items-stretch gap-2">
-          <div className="flex items-center shrink-0">
-            <FileX2 className="w-6 h-6 text-red-400" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-red-400 font-extrabold text-xs uppercase tracking-wide">Balance expired</p>
-            <p className="text-[11px] text-white/90 mt-0.5 leading-snug">
-              No deposit was approved before <span className="text-red-400 font-semibold">{clock}</span>. Your {amt}{" "}
-              balance expired.
-            </p>
-          </div>
-          <div className="shrink-0 border-l border-dashed border-red-600/70 pl-2 flex flex-col justify-center">
-            <button
-              type="button"
-              onClick={() => setHowOpen(true)}
-              className="flex items-center gap-1 text-[10px] font-semibold text-white bg-red-900/60 hover:bg-red-900 border border-red-500/40 rounded-lg px-2 py-1.5"
-            >
-              <Info className="w-3.5 h-3.5" />
-              How it works
-            </button>
-          </div>
-        </div>
-      </div>
-      {howOpen && (
-        <button
-          type="button"
-          className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm"
-          aria-label="Close"
-          onClick={() => setHowOpen(false)}
-        />
-      )}
-      {howOpen && (
-        <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] w-[min(92vw,22rem)] rounded-2xl border border-border bg-card p-5 shadow-2xl">
-          <p className="font-bold text-lg">How the deposit window works</p>
-          <ul className="mt-3 text-sm text-muted-foreground space-y-2 list-disc pl-4">
-            <li>When you submit a deposit request, a countdown starts based on the hours set by admin (default 10h).</li>
-            <li>If an admin approves your deposit before the deadline, your balance is safe and timers clear.</li>
-            <li>If the time runs out without an approved deposit, your in-app balance can be expired per policy.</li>
-          </ul>
-          <button
-            type="button"
-            className="mt-4 w-full py-3 rounded-xl bg-gradient-primary font-semibold text-sm shadow-glow"
-            onClick={() => setHowOpen(false)}
-          >
-            OK
-          </button>
-        </div>
-      )}
-    </>
   );
 }
 

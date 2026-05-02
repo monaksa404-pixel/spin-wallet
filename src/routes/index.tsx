@@ -9,7 +9,6 @@ import { CurrencySelect } from "@/components/CurrencySelect";
 import { fmtCurrency } from "@/lib/games";
 import { HomeOffersCarousel } from "@/components/HomeOffersCarousel";
 import {
-  BalanceExpiryBottomBar,
   BalanceExpiryTopBanner,
   DepositDeadlineBanner,
   MinWithdrawFooter,
@@ -34,8 +33,7 @@ function HomePage() {
   const { wallet, depositDeadlineAt } = useWallet(user?.id);
   const { currency } = useCurrency();
 
-  const expiredSnap = wallet?.expired_balance_snapshot ?? 0;
-  const hasExpiredNotice = expiredSnap > 0;
+  const hasExpiredNotice = (wallet?.expired_balance_snapshot ?? 0) > 0;
   const deadlineMs = depositDeadlineAt ? new Date(depositDeadlineAt).getTime() : NaN;
   const showCountdown =
     !!depositDeadlineAt &&
@@ -63,7 +61,7 @@ function HomePage() {
         </Link>
       </header>
 
-      <div className={`px-4 space-y-4 ${hasExpiredNotice ? "pb-36" : ""}`}>
+      <div className="px-4 space-y-4">
         {hasExpiredNotice && (
           <BalanceExpiryTopBanner
             expiredSnapshot={wallet?.expired_balance_snapshot}
@@ -83,13 +81,6 @@ function HomePage() {
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Total Balance</p>
               <p className="text-3xl font-bold">{fmtCurrency(wallet?.balance ?? 0, currency)}</p>
               <p className="text-[10px] text-muted-foreground mt-1">{fmt(wallet?.balance ?? 0)} USDT</p>
-              {hasExpiredNotice && (
-                <p className="text-xs text-white/85 mt-2 leading-snug">
-                  Your previous balance of{" "}
-                  <span className="font-semibold text-red-400">${Number(expiredSnap).toFixed(2)}</span> has{" "}
-                  <span className="text-red-400 font-semibold">expired</span> and is no longer available.
-                </p>
-              )}
             </div>
             <div className="flex flex-col items-end gap-2 shrink-0">
               <WithdrawQuickLink disabled={hasExpiredNotice} />
@@ -137,13 +128,6 @@ function HomePage() {
           </div>
         </div>
       </div>
-
-      {hasExpiredNotice && (
-        <BalanceExpiryBottomBar
-          expiredSnapshot={wallet?.expired_balance_snapshot}
-          missedDeadlineAt={wallet?.missed_deadline_at}
-        />
-      )}
     </MobileShell>
   );
 }
