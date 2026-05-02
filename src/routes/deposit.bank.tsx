@@ -4,7 +4,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { PageHeader, StepIndicator } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { DEPOSIT_BANK_DETAILS } from "@/lib/deposit-config";
+import { useDepositSettings } from "@/hooks/useDepositSettings";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/deposit/bank")({
@@ -20,6 +20,7 @@ function BankDeposit() {
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const dep = useDepositSettings();
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/login" });
@@ -59,30 +60,28 @@ function BankDeposit() {
     navigate({ to: "/deposit/pending" });
   };
 
-  const d = DEPOSIT_BANK_DETAILS;
-
   return (
     <MobileShell>
-      <PageHeader title="Bank Deposit (Al Rajhi)" back="/deposit" />
+      <PageHeader title={`Bank Deposit (${dep.bank_name})`} back="/deposit" />
       <StepIndicator step={2} />
       <div className="px-4 space-y-4 pb-4">
         <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
           <p className="text-sm font-semibold text-primary-glow">Bank Details</p>
           <div>
             <p className="text-xs text-muted-foreground">Bank Name</p>
-            <p className="text-sm font-semibold">{d.bankName}</p>
+            <p className="text-sm font-semibold">{dep.bank_name}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Account Name</p>
-            <p className="text-sm font-semibold">{d.accountName}</p>
+            <p className="text-sm font-semibold">{dep.bank_account_name}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Account Number</p>
-            <p className="text-sm font-semibold tracking-wide">{d.accountNumber}</p>
+            <p className="text-sm font-semibold tracking-wide">{dep.bank_account_number}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">IBAN</p>
-            <p className="text-sm font-semibold tracking-wide font-mono">{d.iban}</p>
+            <p className="text-sm font-semibold tracking-wide font-mono">{dep.bank_iban}</p>
           </div>
           <p className="text-xs text-muted-foreground pt-2 border-t border-border">After payment, submit your details and amount below.</p>
         </div>

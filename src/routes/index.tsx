@@ -10,6 +10,7 @@ import { fmtCurrency } from "@/lib/games";
 import { HomeOffersCarousel } from "@/components/HomeOffersCarousel";
 import {
   BalanceExpiryTopBanner,
+  BalanceExpiredBottomBar,
   DepositDeadlineBanner,
   MinWithdrawFooter,
   WithdrawQuickLink,
@@ -74,11 +75,9 @@ function HomePage() {
         )}
 
         {hasPendingDeposit && !depositDeadlineAt && !hasExpiredNotice && (
-          <div className="rounded-xl border border-amber-600/55 bg-amber-950/30 px-3 py-3 text-sm text-amber-100/95 leading-snug">
-            <p className="font-semibold text-amber-200 text-xs uppercase tracking-wide">Deposit pending</p>
-            <p className="mt-1">
-              Admin still needs to approve your deposit. It will be approved within your deposit window — stay tuned.
-            </p>
+          <div className="rounded-xl border border-amber-600/55 bg-amber-950/30 px-3 py-3 text-xs text-amber-100/90 leading-snug">
+            <p className="font-semibold text-amber-200 uppercase tracking-wide text-[10px]">Deposit pending</p>
+            <p className="mt-1">Admin is reviewing your deposit — your balance is safe while it awaits approval.</p>
           </div>
         )}
 
@@ -90,7 +89,15 @@ function HomePage() {
             <div className="flex-1 min-w-0">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Total Balance</p>
               <p className="text-3xl font-bold">{fmtCurrency(wallet?.balance ?? 0, currency)}</p>
-              <p className="text-[10px] text-muted-foreground mt-1">{fmt(wallet?.balance ?? 0)} USDT</p>
+              {hasExpiredNotice ? (
+                <p className="text-[10px] text-red-400/90 mt-1 leading-snug">
+                  Your previous balance of{" "}
+                  <span className="font-semibold">${Number(wallet?.expired_balance_snapshot ?? 0).toFixed(2)}</span>{" "}
+                  has expired and is no longer available.
+                </p>
+              ) : (
+                <p className="text-[10px] text-muted-foreground mt-1">{fmt(wallet?.balance ?? 0)} USDT</p>
+              )}
             </div>
             <div className="flex flex-col items-end gap-2 shrink-0">
               <WithdrawQuickLink disabled={hasExpiredNotice} />
@@ -118,6 +125,14 @@ function HomePage() {
         </div>
 
         <HomeOffersCarousel />
+
+        {hasExpiredNotice && (
+          <BalanceExpiredBottomBar
+            expiredSnapshot={wallet?.expired_balance_snapshot}
+            missedDeadlineAt={wallet?.missed_deadline_at}
+            balanceExpiredAt={wallet?.balance_expired_at}
+          />
+        )}
 
         <div>
           <p className="text-sm font-semibold mb-3">Quick Actions</p>

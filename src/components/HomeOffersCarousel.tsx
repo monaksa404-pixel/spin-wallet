@@ -25,7 +25,7 @@ export function HomeOffersCarousel() {
           style={{ transform: `translateX(-${index * 100}%)` }}
         >
           {slides.map((slot) => (
-            <div key={slot.id} className="min-w-full shrink-0 box-border px-0.5 pb-1">
+            <div key={slot.id} className="min-w-full shrink-0 box-border px-1 pt-1 pb-0.5">
               <OfferSlideCard slot={slot} bonusLabel={bonusFor(slot.id)} compact />
             </div>
           ))}

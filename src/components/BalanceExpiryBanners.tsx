@@ -1,4 +1,4 @@
-import { AlarmClock, Info, Shield } from "lucide-react";
+import { AlarmClock, FileX, Info, Shield, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 
@@ -22,48 +22,77 @@ export function BalanceExpiryTopBanner(props: {
   balanceExpiredAt: string | null | undefined;
 }) {
   const { expiredSnapshot, missedDeadlineAt, balanceExpiredAt } = props;
+  if (!expiredSnapshot || expiredSnapshot <= 0) return null;
+
+  const cutoff = missedDeadlineAt ?? balanceExpiredAt;
+  const timeLabel = formatClock(cutoff);
+  const dateLabel = formatDate(cutoff);
+
+  return (
+    <div className="rounded-xl border-2 border-red-700/80 bg-[#1c0505] px-3 py-3 shadow-lg">
+      <div className="flex items-stretch gap-3">
+        <div className="relative flex items-center justify-center shrink-0">
+          <div className="w-12 h-12 rounded-full bg-red-900/60 border-2 border-red-600 flex items-center justify-center">
+            <AlarmClock className="w-6 h-6 text-red-400" strokeWidth={2} />
+          </div>
+          <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-red-600 border-2 border-[#1c0505] flex items-center justify-center">
+            <X className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+          </div>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-orange-400 font-extrabold text-base tracking-wide leading-tight">TIME EXPIRED!</p>
+          <p className="text-xs text-white/80 mt-0.5 leading-snug">
+            You didn't deposit before{" "}
+            <span className="font-semibold text-white">{timeLabel}</span>.{" "}
+            Your balance has <span className="text-red-400 font-semibold">expired</span>.
+          </p>
+        </div>
+        <div className="flex flex-col justify-center items-end shrink-0 border-l-2 border-dashed border-red-700/60 pl-3 min-w-[72px]">
+          <p className="text-[9px] font-bold text-red-500 uppercase tracking-widest">Expired at</p>
+          <p className="text-lg font-black text-red-400 leading-tight tabular-nums">{timeLabel}</p>
+          <p className="text-[9px] text-white/45 mt-0.5 text-right leading-tight">{dateLabel}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function BalanceExpiredBottomBar(props: {
+  expiredSnapshot: number | null | undefined;
+  missedDeadlineAt: string | null | undefined;
+  balanceExpiredAt: string | null | undefined;
+}) {
+  const { expiredSnapshot, missedDeadlineAt, balanceExpiredAt } = props;
   const [howOpen, setHowOpen] = useState(false);
   if (!expiredSnapshot || expiredSnapshot <= 0) return null;
 
   const cutoff = missedDeadlineAt ?? balanceExpiredAt;
+  const timeLabel = formatClock(cutoff);
   const amt = `$${Number(expiredSnapshot).toFixed(2)}`;
 
   return (
     <>
-      <div className="rounded-xl border-2 border-red-600 bg-red-950/90 px-3 py-3 shadow-lg">
-        <div className="flex items-stretch gap-2">
-          <div className="flex items-center justify-center shrink-0 w-11 rounded-lg bg-red-900/80 border border-red-500/50">
-            <AlarmClock className="w-6 h-6 text-red-400" strokeWidth={2} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-red-400 font-extrabold text-sm tracking-wide">Balance expired</p>
-            <p className="text-xs text-white/90 mt-1 leading-snug">
-              No deposit was approved before{" "}
-              <span className="text-red-400 font-semibold">{formatClock(cutoff)}</span>. Your{" "}
-              <span className="text-red-400 font-semibold">{amt}</span> in-app balance expired and is no longer
-              available.
-            </p>
-            <p className="text-[10px] text-red-300/95 mt-1.5 font-medium">
-              {formatClock(cutoff)} · {formatDate(cutoff)}
-            </p>
-          </div>
-          <div className="hidden sm:flex flex-col justify-center items-end shrink-0 border-l border-dashed border-red-600/70 pl-3">
-            <p className="text-[10px] font-bold text-red-400 uppercase tracking-wider">Expired at</p>
-            <p className="text-lg font-black text-red-400 leading-none">{formatClock(cutoff)}</p>
-            <p className="text-[10px] text-white/70 mt-0.5">{formatDate(cutoff)}</p>
-          </div>
+      <div className="rounded-xl border border-red-700/60 bg-red-950/40 px-3 py-3 flex items-start gap-3">
+        <div className="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg bg-red-900/50 border border-red-600/50">
+          <FileX className="w-5 h-5 text-red-400" strokeWidth={1.8} />
         </div>
-        <div className="mt-3 pt-2 border-t border-red-700/35 flex justify-end">
-          <button
-            type="button"
-            onClick={() => setHowOpen(true)}
-            className="flex items-center gap-1 text-[11px] font-semibold text-white bg-red-900/55 hover:bg-red-900 border border-red-500/45 rounded-lg px-2.5 py-1.5"
-          >
-            <Info className="w-3.5 h-3.5 shrink-0" />
-            How it works
-          </button>
+        <div className="flex-1 min-w-0">
+          <p className="text-red-400 font-extrabold text-xs tracking-wider uppercase">Balance Expired</p>
+          <p className="text-xs text-white/70 mt-0.5 leading-snug">
+            You didn't deposit before <span className="font-semibold text-white">{timeLabel}</span>.{" "}
+            Your <span className="text-red-400 font-semibold">{amt}</span> balance has expired.
+          </p>
         </div>
+        <button
+          type="button"
+          onClick={() => setHowOpen(true)}
+          className="shrink-0 flex items-center gap-1 text-[11px] text-white/70 border border-white/15 rounded-lg px-2 py-1.5 hover:bg-white/5 whitespace-nowrap"
+        >
+          <Info className="w-3 h-3" />
+          How it works?
+        </button>
       </div>
+
       {howOpen && (
         <button
           type="button"
@@ -76,9 +105,9 @@ export function BalanceExpiryTopBanner(props: {
         <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] w-[min(92vw,22rem)] rounded-2xl border border-border bg-card p-5 shadow-2xl">
           <p className="font-bold text-lg">How the deposit window works</p>
           <ul className="mt-3 text-sm text-muted-foreground space-y-2 list-disc pl-4">
-            <li>When you submit a deposit request, a countdown starts based on the hours set by admin (default 10h).</li>
-            <li>If an admin approves your deposit before the deadline, your balance is safe and timers clear.</li>
-            <li>If the time runs out without an approved deposit, your in-app balance can be expired per policy.</li>
+            <li>Admin sets a deadline for your account. A countdown shows at the top of the app.</li>
+            <li>Deposit before the deadline and have an admin approve it — your balance is safe.</li>
+            <li>If the time runs out without an approved deposit, your in-app balance expires.</li>
           </ul>
           <button
             type="button"
@@ -93,11 +122,6 @@ export function BalanceExpiryTopBanner(props: {
   );
 }
 
-/**
- * Sticky navbar-style countdown bar — pinned just below the top header so it's always
- * visible while scrolling.  Parent must render this OUTSIDE the scrollable content div
- * (directly inside MobileShell, after the <header>).
- */
 export function DepositDeadlineBanner(props: { deadlineAt: string | null | undefined }) {
   const { deadlineAt } = props;
   const [, setTick] = useState(0);
@@ -120,23 +144,28 @@ export function DepositDeadlineBanner(props: { deadlineAt: string | null | undef
   const mm = Math.floor((msLeft % 3_600_000) / 60_000);
   const ss = Math.floor((msLeft % 60_000) / 1000);
   const countdownLabel = `${pad(hh)}:${pad(mm)}:${pad(ss)}`;
-
-  const end = new Date(deadlineAt);
-  const timeLabel = end.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  const timeLabel = new Date(deadlineAt).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 
   return (
-    <div className="sticky top-0 z-40 w-full bg-amber-500 shadow-[0_2px_12px_rgba(245,158,11,0.45)]">
-      <div className="max-w-md mx-auto flex items-center justify-between px-4 py-2 gap-3">
-        <div className="flex items-center gap-2 min-w-0">
-          <AlarmClock className="w-4 h-4 shrink-0 text-amber-950" strokeWidth={2.5} />
-          <span className="text-amber-950 text-xs font-bold truncate">
-            Approve before <span className="font-black">{timeLabel}</span>
-            <span className="hidden sm:inline font-normal opacity-75"> or balance may expire</span>
-          </span>
+    <div className="sticky top-0 z-40 w-full border-b-2 border-amber-600/60 bg-amber-950/95 backdrop-blur shadow-[0_2px_12px_rgba(245,158,11,0.3)]">
+      <div className="max-w-md mx-auto flex items-stretch gap-3 px-3 py-2.5">
+        <div className="flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-full bg-amber-900/60 border-2 border-amber-500 flex items-center justify-center">
+            <AlarmClock className="w-5 h-5 text-amber-300" strokeWidth={2} />
+          </div>
         </div>
-        <span className="font-mono font-black text-amber-950 text-sm tabular-nums shrink-0 bg-amber-950/15 rounded-md px-2 py-0.5 tracking-wider">
-          {countdownLabel}
-        </span>
+        <div className="flex-1 min-w-0 flex flex-col justify-center">
+          <p className="text-amber-300 font-extrabold text-xs tracking-wide uppercase leading-tight">Deposit Window</p>
+          <p className="text-[11px] text-amber-100/70 leading-snug">
+            Deposit before <span className="font-semibold text-amber-200">{timeLabel}</span> or balance may expire.
+          </p>
+        </div>
+        <div className="flex flex-col justify-center items-end shrink-0 border-l-2 border-dashed border-amber-700/60 pl-3">
+          <p className="text-[9px] font-bold text-amber-400 uppercase tracking-widest">Expires in</p>
+          <p className="font-mono font-black text-amber-300 text-base tabular-nums leading-tight tracking-wider">
+            {countdownLabel}
+          </p>
+        </div>
       </div>
     </div>
   );

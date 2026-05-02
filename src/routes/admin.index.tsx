@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Clock, Save } from "lucide-react";
+import { Clock, Save, UserClock, Building2 } from "lucide-react";
 import { AdminShell, StatCard, StatusPill } from "@/components/AdminShell";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -22,6 +22,9 @@ type RecentRow = {
   time: string;
 };
 
+type DepositSetting = { key: string; value: string };
+type UserRow = { id: string; full_name: string | null };
+
 function AdminDashboard() {
   const [stats, setStats] = useState({ users: 0, deposits: 0, withdrawals: 0, pending: 0 });
   const [recentDep, setRecentDep] = useState<RecentRow[]>([]);
@@ -29,9 +32,64 @@ function AdminDashboard() {
   const [deadlineHours, setDeadlineHours] = useState("10");
   const [deadlineSaving, setDeadlineSaving] = useState(false);
 
+  const [userSearch, setUserSearch] = useState("");
+  const [userResults, setUserResults] = useState<UserRow[]>([]);
+  const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
+  const [userDeadline, setUserDeadline] = useState("");
+  const [userDeadlineSaving, setUserDeadlineSaving] = useState(false);
+
+  const [depSettings, setDepSettings] = useState<Record<string, string>>({});
+  const [depSettingsSaving, setDepSettingsSaving] = useState(false);
+
   const loadDeadline = async () => {
     const { data, error } = await supabase.from("balance_deadline_settings").select("deadline_hours").eq("id", 1).maybeSingle();
     if (!error && data?.deadline_hours != null) setDeadlineHours(String(Number(data.deadline_hours)));
+  };
+
+  const loadDepSettings = async () => {
+    const { data } = await supabase.from("deposit_settings").select("key, value");
+    if (data) {
+      const map: Record<string, string> = {};
+      (data as DepositSetting[]).forEach((r) => { map[r.key] = r.value; });
+      setDepSettings(map);
+    }
+  };
+
+  const saveDepSettings = async () => {
+    setDepSettingsSaving(true);
+    const updates = Object.entries(depSettings).map(([key, value]) =>
+      supabase.from("deposit_settings").update({ value, updated_at: new Date().toISOString() }).eq("key", key)
+    );
+    const results = await Promise.all(updates);
+    setDepSettingsSaving(false);
+    const err = results.find((r) => r.error);
+    if (err?.error) toast.error(err.error.message);
+    else toast.success("Deposit details saved");
+  };
+
+  const searchUsers = async (q: string) => {
+    if (!q.trim()) { setUserResults([]); return; }
+    const { data } = await supabase.from("profiles").select("id, full_name").ilike("full_name", `%${q.trim()}%`).limit(8);
+    setUserResults((data ?? []) as UserRow[]);
+  };
+
+  const setUserDeadlineAction = async () => {
+    if (!selectedUser) { toast.error("Select a user first"); return; }
+    if (!userDeadline) { toast.error("Pick a deadline date/time"); return; }
+    setUserDeadlineSaving(true);
+    const { error } = await supabase.rpc("admin_set_user_deadline", {
+      _user_id: selectedUser.id,
+      _deadline_at: new Date(userDeadline).toISOString(),
+    });
+    setUserDeadlineSaving(false);
+    if (error) toast.error(error.message);
+    else {
+      toast.success(`Deadline set for ${selectedUser.full_name ?? selectedUser.id}`);
+      setSelectedUser(null);
+      setUserSearch("");
+      setUserResults([]);
+      setUserDeadline("");
+    }
   };
 
   const saveDeadline = async () => {
@@ -102,6 +160,7 @@ function AdminDashboard() {
   };
 
   useEffect(() => {
+    void loadDepSettings();
     void load();
     const ch = supabase
       .channel("admin-overview")
@@ -153,6 +212,103 @@ function AdminDashboard() {
             Save
           </button>
         </div>
+      </div>
+
+      <div className="bg-card border border-border rounded-2xl p-5 mb-6 flex flex-col gap-4">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
+            <UserClock className="w-5 h-5 text-primary-glow" />
+          </div>
+          <div>
+            <p className="font-semibold">Set countdown deadline for a user</p>
+            <p className="text-xs text-muted-foreground mt-1 max-w-md">
+              Search a user by name and assign a specific date/time deadline. The countdown banner will appear for that user until they deposit and it's approved.
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
+          <div className="relative flex-1 min-w-[180px]">
+            <input
+              value={userSearch}
+              onChange={(e) => { setUserSearch(e.target.value); void searchUsers(e.target.value); }}
+              placeholder="Search user by name…"
+              className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
+            />
+            {userResults.length > 0 && (
+              <div className="absolute top-full mt-1 left-0 right-0 z-20 bg-card border border-border rounded-xl shadow-xl overflow-hidden">
+                {userResults.map((u) => (
+                  <button
+                    key={u.id}
+                    type="button"
+                    onClick={() => { setSelectedUser(u); setUserSearch(u.full_name ?? u.id); setUserResults([]); }}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition"
+                  >
+                    {u.full_name ?? u.id}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <input
+            type="datetime-local"
+            value={userDeadline}
+            onChange={(e) => setUserDeadline(e.target.value)}
+            className="bg-input border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
+          />
+          <button
+            type="button"
+            disabled={userDeadlineSaving}
+            onClick={() => void setUserDeadlineAction()}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-primary text-sm font-semibold shadow-glow disabled:opacity-60 whitespace-nowrap"
+          >
+            <Save className="w-4 h-4" />
+            Set Deadline
+          </button>
+        </div>
+        {selectedUser && (
+          <p className="text-xs text-primary-glow">
+            Selected: <span className="font-semibold">{selectedUser.full_name ?? selectedUser.id}</span>
+          </p>
+        )}
+      </div>
+
+      <div className="bg-card border border-border rounded-2xl p-5 mb-6">
+        <div className="flex items-start gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center shrink-0">
+            <Building2 className="w-5 h-5 text-blue-400" />
+          </div>
+          <div>
+            <p className="font-semibold">Deposit instructions (shown to users)</p>
+            <p className="text-xs text-muted-foreground mt-1">Edit the bank account details and USDT wallet address that users see when depositing.</p>
+          </div>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {[
+            { key: "usdt_trc20_address", label: "USDT TRC20 Wallet Address", mono: true },
+            { key: "bank_name",          label: "Bank Name",                 mono: false },
+            { key: "bank_account_name",  label: "Account Name",              mono: false },
+            { key: "bank_account_number",label: "Account Number",            mono: true  },
+            { key: "bank_iban",          label: "IBAN",                      mono: true  },
+          ].map(({ key, label, mono }) => (
+            <label key={key} className={`block text-xs ${key === "usdt_trc20_address" || key === "bank_iban" ? "sm:col-span-2" : ""}`}>
+              <span className="text-muted-foreground">{label}</span>
+              <input
+                value={depSettings[key] ?? ""}
+                onChange={(e) => setDepSettings((prev) => ({ ...prev, [key]: e.target.value }))}
+                className={`mt-1 w-full bg-input border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary ${mono ? "font-mono" : ""}`}
+              />
+            </label>
+          ))}
+        </div>
+        <button
+          type="button"
+          disabled={depSettingsSaving}
+          onClick={() => void saveDepSettings()}
+          className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-primary text-sm font-semibold shadow-glow disabled:opacity-60"
+        >
+          <Save className="w-4 h-4" />
+          Save deposit details
+        </button>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

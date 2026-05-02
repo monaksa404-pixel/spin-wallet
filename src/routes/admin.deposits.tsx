@@ -61,6 +61,7 @@ function AdminDeposits() {
   const [rows, setRows] = useState<Row[]>([]);
   const [tab, setTab] = useState<"All" | Status>("pending");
   const [amounts, setAmounts] = useState<Record<string, string>>({});
+  const [bonuses, setBonuses] = useState<Record<string, string>>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [bankDrafts, setBankDrafts] = useState<Record<string, BankDraft>>({});
   const [usdtDrafts, setUsdtDrafts] = useState<Record<string, UsdtDraft>>({});
@@ -166,10 +167,11 @@ function AdminDeposits() {
       toast.error("Enter approval amount");
       return;
     }
-    const { error } = await supabase.rpc("approve_deposit", { _id: r.id, _amount: amt });
+    const bonus = Number(bonuses[r.id] ?? 0) || 0;
+    const { error } = await supabase.rpc("approve_deposit", { _id: r.id, _amount: amt, _bonus: bonus });
     if (error) toast.error(error.message);
     else {
-      toast.success("Approved & credited");
+      toast.success(bonus > 0 ? `Approved — $${amt.toFixed(2)} + $${bonus.toFixed(2)} bonus credited` : "Approved & credited");
       await load();
     }
   };
@@ -209,6 +211,7 @@ function AdminDeposits() {
                 <th className="text-left px-4 py-3 hidden lg:table-cell">Payer account #</th>
                 <th className="text-left px-4 py-3">Requested</th>
                 <th className="text-left px-4 py-3">Approve $</th>
+                <th className="text-left px-4 py-3">Bonus $</th>
                 <th className="text-left px-4 py-3">Status</th>
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
@@ -255,6 +258,21 @@ function AdminDeposits() {
                         )}
                       </td>
                       <td className="px-4 py-3">
+                        {r.status === "pending" ? (
+                          <input
+                            type="number"
+                            placeholder="0"
+                            value={bonuses[r.id] ?? ""}
+                            onChange={(e) => setBonuses({ ...bonuses, [r.id]: e.target.value })}
+                            className="w-24 bg-input border border-border rounded-lg px-2 py-1 outline-none focus:border-primary text-primary-glow"
+                          />
+                        ) : (r as any).bonus_amount && Number((r as any).bonus_amount) > 0 ? (
+                          <span className="text-primary-glow font-semibold">${Number((r as any).bonus_amount).toFixed(2)}</span>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
                         <StatusPill status={r.status} />
                       </td>
                       <td className="px-4 py-3">
@@ -284,7 +302,7 @@ function AdminDeposits() {
                     </tr>
                     {isExpanded && r.method === "bank" && (
                       <tr className="bg-muted/20 border-t border-border">
-                        <td colSpan={8} className="px-4 py-4">
+                        <td colSpan={9} className="px-4 py-4">
                           <p className="text-xs font-semibold text-primary-glow mb-3">Edit bank details & amount</p>
                           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                             <label className="block text-xs">
@@ -333,7 +351,7 @@ function AdminDeposits() {
                     )}
                     {isExpanded && r.method === "usdt" && (
                       <tr className="bg-muted/20 border-t border-border">
-                        <td colSpan={8} className="px-4 py-4">
+                        <td colSpan={9} className="px-4 py-4">
                           <p className="text-xs font-semibold text-primary-glow mb-3">Edit USDT wallet address & amount</p>
                           <div className="grid gap-3 sm:grid-cols-2">
                             <label className="block text-xs sm:col-span-2">
@@ -370,7 +388,7 @@ function AdminDeposits() {
               })}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="text-center py-10 text-muted-foreground text-sm">
+                  <td colSpan={9} className="text-center py-10 text-muted-foreground text-sm">
                     No requests
                   </td>
                 </tr>

@@ -5,7 +5,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { PageHeader, StepIndicator } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { DEPOSIT_USDT_TRC20_ADDRESS } from "@/lib/deposit-config";
+import { useDepositSettings } from "@/hooks/useDepositSettings";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/deposit/usdt")({
@@ -19,6 +19,7 @@ function UsdtDeposit() {
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const dep = useDepositSettings();
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/login" });
@@ -81,11 +82,11 @@ function UsdtDeposit() {
         <div>
           <label className="text-xs font-medium text-muted-foreground">TRC20 Wallet Address</label>
           <div className="mt-1 flex items-center gap-2 bg-input border border-border rounded-xl px-4 py-3">
-            <p className="text-[11px] font-mono break-all flex-1 leading-snug">{DEPOSIT_USDT_TRC20_ADDRESS}</p>
+            <p className="text-[11px] font-mono break-all flex-1 leading-snug">{dep.usdt_trc20_address}</p>
             <button
               type="button"
               onClick={() => {
-                void navigator.clipboard?.writeText(DEPOSIT_USDT_TRC20_ADDRESS);
+                void navigator.clipboard?.writeText(dep.usdt_trc20_address);
                 toast.success("Copied");
               }}
               className="text-primary-glow shrink-0"

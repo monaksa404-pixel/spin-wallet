@@ -31,7 +31,7 @@ export function OfferSlideCard({ slot, bonusLabel, compact }: Props) {
   return (
     <div className="rounded-2xl overflow-hidden border border-border bg-card shadow-card">
       {compact ? (
-        <div className="relative w-full bg-muted aspect-[16/10]">
+        <div className="relative w-full bg-muted aspect-[16/8]">
           <img
             src={offerImageSrc(slot.imageFile)}
             alt=""
