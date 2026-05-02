@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronRight, CreditCard, Coins, Gift, Landmark, Wallet } from "lucide-react";
+import { ChevronRight, CreditCard, Coins, Landmark } from "lucide-react";
 import { useEffect, useState } from "react";
 import { MobileShell } from "@/components/MobileShell";
 import { PageHeader } from "@/components/PageHeader";
@@ -57,8 +57,13 @@ function StatusPill({ status }: { status: string }) {
   return <span className={`px-2 py-0.5 rounded-md text-xs font-semibold capitalize ${cls}`}>{status}</span>;
 }
 
+function fmtUsd(n: number | null | undefined) {
+  return `$${Number(n ?? 0).toFixed(2)}`;
+}
+
 function DepositPage() {
   const { user, loading } = useAuth();
+  const { wallet } = useWallet(user?.id);
   const [recent, setRecent] = useState<DepositRow[]>([]);
 
   useEffect(() => {
@@ -100,36 +105,23 @@ function DepositPage() {
         </div>
 
         <div>
-          {user && (
-            <div className="rounded-2xl border border-border bg-gradient-card p-4 shadow-card mb-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Your balances</p>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
-                    <Wallet className="w-5 h-5 text-primary-glow" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[10px] uppercase text-muted-foreground font-medium">Balance</p>
-                    <p className="text-xl font-bold truncate">{fmtUsd(wallet?.balance)}</p>
-                  </div>
-                </div>
-                <div className="flex gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
-                    <Gift className="w-5 h-5 text-primary-glow" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[10px] uppercase text-muted-foreground font-medium">Bonus</p>
-                    <p className="text-xl font-bold text-primary-glow truncate">{fmtUsd(wallet?.bonus_balance)}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">From admin</p>
-                  </div>
-                </div>
-              </div>
+          <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-card">
+            <div className="px-3 py-3 border-b border-border space-y-2">
+              <p className="text-sm font-semibold">Recent Deposits</p>
+              {user && (
+                <p className="text-xs flex flex-wrap gap-x-5 gap-y-1">
+                  <span className="text-muted-foreground">
+                    Balance{" "}
+                    <span className="text-foreground font-semibold tabular-nums">{fmtUsd(wallet?.balance)}</span>
+                  </span>
+                  <span className="text-muted-foreground">
+                    Your bonus{" "}
+                    <span className="text-primary-glow font-semibold tabular-nums">{fmtUsd(wallet?.bonus_balance)}</span>
+                  </span>
+                </p>
+              )}
             </div>
-          )}
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-semibold">Recent Deposits</p>
-          </div>
-          <div className="bg-card border border-border rounded-2xl divide-y divide-border">
+            <div className="divide-y divide-border">
             {!user && !loading && (
               <div className="p-4 text-center text-sm text-muted-foreground">
                 <Link to="/login" className="text-primary-glow font-semibold">
@@ -157,6 +149,7 @@ function DepositPage() {
                 </div>
               </div>
             ))}
+            </div>
           </div>
         </div>
       </div>
