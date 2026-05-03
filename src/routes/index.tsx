@@ -88,7 +88,7 @@ function HomePage() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Total Balance</p>
-              <p className="text-3xl font-bold">{fmtCurrency(wallet?.balance ?? 0, currency)}</p>
+              <p className="text-2xl font-bold">{fmtCurrency((wallet?.balance ?? 0) + (wallet?.bonus_balance ?? 0), currency)}</p>
               {hasExpiredNotice ? (
                 <p className="text-[10px] text-red-400/90 mt-1 leading-snug">
                   Your previous balance of{" "}
@@ -96,7 +96,7 @@ function HomePage() {
                   has expired and is no longer available.
                 </p>
               ) : (
-                <p className="text-[10px] text-muted-foreground mt-1">{fmt(wallet?.balance ?? 0)} USDT</p>
+                <p className="text-[10px] text-muted-foreground mt-1">{fmt((wallet?.balance ?? 0) + (wallet?.bonus_balance ?? 0))} USDT</p>
               )}
             </div>
             <div className="flex flex-col items-end gap-2 shrink-0">
@@ -109,6 +109,7 @@ function HomePage() {
 
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-card rounded-2xl p-4 border border-border">
+            <p className="text-[9px] text-muted-foreground/60 uppercase tracking-widest mb-1">Last 7 days bonus</p>
             <div className="flex items-center gap-2 mb-2">
               <Gift className="w-4 h-4 text-primary-glow" />
               <span className="text-xs text-muted-foreground uppercase">Bonus Balance</span>

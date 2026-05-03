@@ -115,8 +115,17 @@ function AdminWithdrawals() {
                   <td className="px-4 py-3 font-medium">{r.profile_name}</td>
                   <td className="px-4 py-3 capitalize">{r.method}</td>
                   <td className="px-4 py-3 font-semibold">${Number(r.amount).toFixed(2)}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground max-w-[260px] truncate">
-                    {r.method === "usdt" ? r.usdt_address : `${r.account_name} · ${r.bank_name} · ${r.account_number}${r.iban ? " · " + r.iban : ""}`}
+                  <td className="px-4 py-3 text-xs text-muted-foreground max-w-[280px]">
+                    {r.method === "usdt" ? (
+                      <span className="font-mono break-all">{r.usdt_address ?? "—"}</span>
+                    ) : (
+                      <div className="space-y-0.5">
+                        {r.account_name   && <div><span className="text-foreground/60">Name:</span> {r.account_name}</div>}
+                        {r.bank_name      && <div><span className="text-foreground/60">Bank:</span> {r.bank_name}</div>}
+                        {r.account_number && <div><span className="text-foreground/60">Acc#:</span> <span className="font-mono">{r.account_number}</span></div>}
+                        {r.iban           && <div><span className="text-foreground/60">IBAN:</span> <span className="font-mono">{r.iban}</span></div>}
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <StatusPill status={r.status} />

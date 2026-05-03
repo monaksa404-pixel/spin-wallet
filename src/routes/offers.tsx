@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { OfferSlideCard } from "@/components/OfferSlideCard";
 import { useAuth } from "@/hooks/useAuth";
 import { useOfferPromotions } from "@/hooks/useOfferPromotions";
+import { useOfferCountdowns } from "@/hooks/useOfferCountdowns";
 import { OFFER_SLOTS_ORDERED } from "@/lib/offer-config";
 
 export const Route = createFileRoute("/offers")({
@@ -16,6 +17,7 @@ function OffersPage() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const { bonusFor } = useOfferPromotions();
+  const countdowns = useOfferCountdowns(user?.id);
   const [tab, setTab] = useState<"active" | "past">("active");
 
   useEffect(() => {
@@ -42,7 +44,7 @@ function OffersPage() {
         {tab === "active" ? (
           <div className="space-y-5">
             {OFFER_SLOTS_ORDERED.map((slot) => (
-              <OfferSlideCard key={slot.id} slot={slot} bonusLabel={bonusFor(slot.id)} />
+              <OfferSlideCard key={slot.id} slot={slot} bonusLabel={bonusFor(slot.id)} countdownAt={countdowns[slot.id]} />
             ))}
           </div>
         ) : (

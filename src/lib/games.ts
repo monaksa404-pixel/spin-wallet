@@ -8,15 +8,15 @@ export type Prize = {
   color: string;
 };
 
-// Standard 7-prize palette per the requirements: 0x, 1x, 5x, 5%, 10%, 20%, 50%
 export const STANDARD_PRIZES: Prize[] = [
-  { label: "0X",  kind: "multiplier", value: 0,  color: "#475569" },
   { label: "1X",  kind: "multiplier", value: 1,  color: "#ec4899" },
-  { label: "5X",  kind: "multiplier", value: 5,  color: "#a855f7" },
-  { label: "5%",  kind: "percent",    value: 5,  color: "#10b981" },
-  { label: "10%", kind: "percent",    value: 10, color: "#3b82f6" },
-  { label: "20%", kind: "percent",    value: 20, color: "#f59e0b" },
-  { label: "50%", kind: "percent",    value: 50, color: "#22c55e" },
+  { label: "2X",  kind: "multiplier", value: 2,  color: "#a855f7" },
+  { label: "4X",  kind: "multiplier", value: 4,  color: "#10b981" },
+  { label: "8X",  kind: "multiplier", value: 8,  color: "#3b82f6" },
+  { label: "10X", kind: "multiplier", value: 10, color: "#f59e0b" },
+  { label: "15X", kind: "multiplier", value: 15, color: "#22c55e" },
+  { label: "20X", kind: "multiplier", value: 20, color: "#ef4444" },
+  { label: "50X", kind: "multiplier", value: 50, color: "#eab308" },
 ];
 
 export const computeUsdt = (p: Prize, betUsdt: number) => {
@@ -27,10 +27,7 @@ export const computeUsdt = (p: Prize, betUsdt: number) => {
 export type GameId = "luck_wheel" | "slot_machine" | "lucky_box" | "bonus_drop";
 
 export const GAMES: { id: GameId; name: string; tagline: string; emoji: string; path: string }[] = [
-  { id: "luck_wheel",   name: "Luck Wheel",   tagline: "Spin the wheel of fortune",      emoji: "🎡", path: "/games/luck-wheel" },
-  { id: "slot_machine", name: "Slot Machine", tagline: "Pull the lever, hit the jackpot", emoji: "🎰", path: "/games/slot-machine" },
-  { id: "lucky_box",    name: "Lucky Box",    tagline: "Pick a box, reveal the reward",   emoji: "🎁", path: "/games/lucky-box" },
-  { id: "bonus_drop",   name: "Bonus Drop",   tagline: "Drop the coin, multiply your bet", emoji: "🪙", path: "/games/bonus-drop" },
+  { id: "luck_wheel", name: "Luck Wheel", tagline: "Spin the wheel of fortune", emoji: "🎡", path: "/games/luck-wheel" },
 ];
 
 // Currency conversion (mid-market approximations, USDT pegged to USD).
@@ -57,16 +54,15 @@ export const fmtCurrency = (usdt: number, code: CurrencyCode) => {
 
 export const COINS_PER_USDT = 100;
 
-// Weighted distribution for game results (percent weights sum ~100).
-// ~90% skew toward lower payouts (0X–10%); remaining ~10% for 20% / 50% / 5X combined.
 const PRIZE_WEIGHTS: Record<string, number> = {
-  "0X": 34,
-  "1X": 30,
-  "5%": 14,
-  "10%": 12,
-  "20%": 4,
-  "50%": 3,
-  "5X": 3,
+  "1X":  35,
+  "2X":  28,
+  "4X":  16,
+  "8X":  10,
+  "10X": 5,
+  "15X": 3,
+  "20X": 2,
+  "50X": 1,
 };
 
 export function pickWeightedPrizeIndex(prizes: Prize[] = STANDARD_PRIZES): number {

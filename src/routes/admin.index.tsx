@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Save, CalendarClock, Building2 } from "lucide-react";
+import { Save, CalendarClock, Building2, Timer } from "lucide-react";
+import { OFFER_SLOTS_ORDERED } from "@/lib/offer-config";
 import { AdminShell, StatCard, StatusPill } from "@/components/AdminShell";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -29,6 +30,13 @@ function AdminDashboard() {
   const [stats, setStats] = useState({ users: 0, deposits: 0, withdrawals: 0, pending: 0 });
   const [recentDep, setRecentDep] = useState<RecentRow[]>([]);
   const [recentWd, setRecentWd] = useState<RecentRow[]>([]);
+  const [offerUserSearch, setOfferUserSearch] = useState("");
+  const [offerUserResults, setOfferUserResults] = useState<UserRow[]>([]);
+  const [offerSelectedUser, setOfferSelectedUser] = useState<UserRow | null>(null);
+  const [offerSelectedId, setOfferSelectedId] = useState(OFFER_SLOTS_ORDERED[0].id as string);
+  const [offerExpiry, setOfferExpiry] = useState("");
+  const [offerSaving, setOfferSaving] = useState(false);
+
   const [userSearch, setUserSearch] = useState("");
   const [userResults, setUserResults] = useState<UserRow[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
@@ -57,6 +65,32 @@ function AdminDashboard() {
     const err = results.find((r) => r.error);
     if (err?.error) toast.error(err.error.message);
     else toast.success("Deposit details saved");
+  };
+
+  const searchOfferUsers = async (q: string) => {
+    if (!q.trim()) { setOfferUserResults([]); return; }
+    const { data } = await supabase.from("profiles").select("id, full_name").ilike("full_name", `%${q.trim()}%`).limit(8);
+    setOfferUserResults((data ?? []) as UserRow[]);
+  };
+
+  const saveOfferCountdown = async () => {
+    if (!offerSelectedUser) { toast.error("Select a user first"); return; }
+    if (!offerExpiry) { toast.error("Pick an expiry date/time"); return; }
+    setOfferSaving(true);
+    const { error } = await supabase.rpc("admin_set_offer_countdown", {
+      _user_id: offerSelectedUser.id,
+      _offer_id: offerSelectedId,
+      _expires_at: new Date(offerExpiry).toISOString(),
+    });
+    setOfferSaving(false);
+    if (error) toast.error(error.message);
+    else {
+      toast.success(`Countdown set for ${offerSelectedUser.full_name ?? offerSelectedUser.id}`);
+      setOfferSelectedUser(null);
+      setOfferUserSearch("");
+      setOfferUserResults([]);
+      setOfferExpiry("");
+    }
   };
 
   const searchUsers = async (q: string) => {
@@ -150,6 +184,71 @@ function AdminDashboard() {
 
   return (
     <AdminShell title="Dashboard Overview">
+      <div className="bg-card border border-border rounded-2xl p-5 mb-6 flex flex-col gap-4">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-green-500/15 border border-green-500/30 flex items-center justify-center shrink-0">
+            <Timer className="w-5 h-5 text-green-400" />
+          </div>
+          <div>
+            <p className="font-semibold">Set offer countdown for a user</p>
+            <p className="text-xs text-muted-foreground mt-1 max-w-md">
+              Search a user, choose an offer, and set an expiry time. The countdown shows on that offer card for that user only. When time runs out it disappears automatically.
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
+          <div className="relative flex-1 min-w-[160px]">
+            <input
+              value={offerUserSearch}
+              onChange={(e) => { setOfferUserSearch(e.target.value); void searchOfferUsers(e.target.value); }}
+              placeholder="Search user by name…"
+              className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
+            />
+            {offerUserResults.length > 0 && (
+              <div className="absolute top-full mt-1 left-0 right-0 z-20 bg-card border border-border rounded-xl shadow-xl overflow-hidden">
+                {offerUserResults.map((u) => (
+                  <button key={u.id} type="button"
+                    onClick={() => { setOfferSelectedUser(u); setOfferUserSearch(u.full_name ?? u.id); setOfferUserResults([]); }}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition"
+                  >
+                    {u.full_name ?? u.id}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <select
+            value={offerSelectedId}
+            onChange={(e) => setOfferSelectedId(e.target.value)}
+            className="bg-input border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
+          >
+            {OFFER_SLOTS_ORDERED.map((s) => (
+              <option key={s.id} value={s.id}>{s.depositButtonLabel}</option>
+            ))}
+          </select>
+          <input
+            type="datetime-local"
+            value={offerExpiry}
+            onChange={(e) => setOfferExpiry(e.target.value)}
+            className="bg-input border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
+          />
+          <button
+            type="button"
+            disabled={offerSaving}
+            onClick={() => void saveOfferCountdown()}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-primary text-sm font-semibold shadow-glow disabled:opacity-60 whitespace-nowrap"
+          >
+            <Save className="w-4 h-4" />
+            Set Countdown
+          </button>
+        </div>
+        {offerSelectedUser && (
+          <p className="text-xs text-green-400">
+            Selected: <span className="font-semibold">{offerSelectedUser.full_name ?? offerSelectedUser.id}</span>
+          </p>
+        )}
+      </div>
+
       <div className="bg-card border border-border rounded-2xl p-5 mb-6 flex flex-col gap-4">
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">

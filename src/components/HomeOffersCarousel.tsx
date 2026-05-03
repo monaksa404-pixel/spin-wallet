@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
 import { useOfferPromotions } from "@/hooks/useOfferPromotions";
+import { useOfferCountdowns } from "@/hooks/useOfferCountdowns";
 import { OFFER_SLOTS_ORDERED } from "@/lib/offer-config";
 import { OfferSlideCard } from "@/components/OfferSlideCard";
+import { useAuth } from "@/hooks/useAuth";
 
 const ROTATE_MS = 4500;
 
 export function HomeOffersCarousel() {
+  const { user } = useAuth();
   const { bonusFor } = useOfferPromotions();
+  const countdowns = useOfferCountdowns(user?.id);
   const [index, setIndex] = useState(0);
   const slides = OFFER_SLOTS_ORDERED;
 
@@ -26,7 +30,7 @@ export function HomeOffersCarousel() {
         >
           {slides.map((slot) => (
             <div key={slot.id} className="min-w-full shrink-0 box-border px-1 pt-1 pb-0.5">
-              <OfferSlideCard slot={slot} bonusLabel={bonusFor(slot.id)} compact />
+              <OfferSlideCard slot={slot} bonusLabel={bonusFor(slot.id)} compact countdownAt={countdowns[slot.id]} />
             </div>
           ))}
         </div>

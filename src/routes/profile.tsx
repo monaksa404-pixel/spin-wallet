@@ -1,8 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ChevronRight, Settings, User, Shield, Landmark, History, HelpCircle, LogOut, Wallet } from "lucide-react";
+import { ChevronRight, Settings, User, Shield, Landmark, History, HelpCircle, LogOut, Wallet, Pencil, Check, X } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/hooks/useAuth";
 import { useWallet } from "@/hooks/useWallet";
+import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({ meta: [{ title: "Profile — GameBonus" }] }),
@@ -21,6 +24,24 @@ function ProfilePage() {
   const { user, signOut } = useAuth();
   const { wallet } = useWallet(user?.id);
   const navigate = useNavigate();
+  const [editingName, setEditingName] = useState(false);
+  const [newName, setNewName] = useState("");
+
+  const startEdit = () => {
+    setNewName(user?.user_metadata?.full_name ?? "");
+    setEditingName(true);
+  };
+
+  const saveName = async () => {
+    if (!newName.trim()) { toast.error("Name cannot be empty"); return; }
+    const { error } = await supabase.auth.updateUser({ data: { full_name: newName.trim() } });
+    if (error) { toast.error(error.message); return; }
+    if (user) {
+      await supabase.from("profiles").update({ full_name: newName.trim() }).eq("id", user.id);
+    }
+    setEditingName(false);
+    toast.success("Username updated");
+  };
 
   const handleLogout = async () => {
     await signOut();
@@ -39,8 +60,27 @@ function ProfilePage() {
           <div className="w-16 h-16 rounded-full bg-gradient-primary flex items-center justify-center shadow-glow">
             <User className="w-8 h-8" />
           </div>
-          <div className="min-w-0">
-            <p className="text-xl font-bold truncate">{user?.user_metadata?.full_name ?? user?.email ?? "Guest"}</p>
+          <div className="min-w-0 flex-1">
+            {editingName ? (
+              <div className="flex items-center gap-2 mb-1">
+                <input
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") void saveName(); if (e.key === "Escape") setEditingName(false); }}
+                  className="bg-input border border-border rounded-lg px-2 py-1 text-sm outline-none focus:border-primary flex-1 min-w-0"
+                  autoFocus
+                />
+                <button type="button" onClick={() => void saveName()} className="p-1.5 rounded-lg bg-success/20 text-success"><Check className="w-4 h-4" /></button>
+                <button type="button" onClick={() => setEditingName(false)} className="p-1.5 rounded-lg bg-destructive/20 text-destructive"><X className="w-4 h-4" /></button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 mb-0.5">
+                <p className="text-xl font-bold truncate">{user?.user_metadata?.full_name ?? user?.email ?? "Guest"}</p>
+                <button type="button" onClick={startEdit} className="text-muted-foreground hover:text-foreground shrink-0">
+                  <Pencil className="w-4 h-4" />
+                </button>
+              </div>
+            )}
             <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
             <p className="text-xs text-muted-foreground font-mono">{user?.id.slice(0, 8)}</p>
           </div>
