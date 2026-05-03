@@ -24,7 +24,7 @@ export function useGamePlay(game: GameId) {
     const betUsdt = betCoins / COINS_PER_USDT;
     const won = prize.kind === "multiplier" ? betUsdt * prize.value : betUsdt * (prize.value / 100);
     if (won <= 0)
-      toast.message(`No win this time (${prize.label}). Better luck next!`);
+      toast.message("No win this time. Better luck next!");
     else toast.success(`You won ${prize.label} (~$${won.toFixed(2)} USDT) — credited to balance automatically.`);
     return true;
   };
