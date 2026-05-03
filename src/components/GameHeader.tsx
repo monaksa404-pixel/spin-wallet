@@ -28,8 +28,8 @@ export function GameHeader({ title, back = "/games" }: { title: string; back?: s
           </div>
         </div>
         <div className="flex-1 bg-gradient-card border border-border rounded-xl px-3 py-2">
-          <p className="text-[9px] uppercase text-muted-foreground leading-none">Wallet</p>
-          <p className="text-sm font-bold leading-tight">{fmtCurrency(wallet?.balance ?? 0, currency)}</p>
+          <p className="text-[9px] uppercase text-muted-foreground leading-none">Total Balance</p>
+          <p className="text-sm font-bold leading-tight">{fmtCurrency((wallet?.balance ?? 0) + (wallet?.bonus_balance ?? 0), currency)}</p>
         </div>
         <CurrencySelect />
       </div>
