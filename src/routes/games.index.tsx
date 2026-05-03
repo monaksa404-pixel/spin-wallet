@@ -53,8 +53,8 @@ function GamesHub() {
         <div className="bg-gradient-card border border-border rounded-2xl p-4">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Wallet</p>
-              <p className="text-2xl font-bold">{fmtCurrency(wallet?.balance ?? 0, currency)}</p>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Total Balance</p>
+              <p className="text-2xl font-bold">{fmtCurrency((wallet?.balance ?? 0) + (wallet?.bonus_balance ?? 0), currency)}</p>
             </div>
             <CurrencySelect />
           </div>

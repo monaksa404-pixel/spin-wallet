@@ -29,10 +29,18 @@ function LuckWheel() {
     if ((wallet?.coins ?? 0) < bet) return;
     setSpinning(true);
     const winIdx = pickWeightedPrizeIndex(slices);
-    // Pointer is at top (-90°). Slice i center on wheel is at (-90 + (i + ½)·sliceAngle)° before rotation.
-    // Rotate clockwise so that slice lines up with the pointer; increment matches weighted prize index.
-    const spins = 6;
-    setRotation((r) => r + 360 * spins + (winIdx + 0.5) * sliceAngle);
+    // Correct formula: pointer is at top. Slice i center (unrotated) is at
+    // ((i+0.5)*sliceAngle - 90)° in SVG space. After rotating by R degrees, its
+    // screen position = ((i+0.5)*sliceAngle - 90 + R)°. For pointer alignment we
+    // need that ≡ -90° (mod 360), i.e. R ≡ -(i+0.5)*sliceAngle (mod 360).
+    setRotation((r) => {
+      const targetMod = (-(winIdx + 0.5) * sliceAngle % 360 + 360) % 360;
+      const currentMod = ((r % 360) + 360) % 360;
+      let delta = (targetMod - currentMod + 360) % 360;
+      // Guarantee at least one full extra rotation so the wheel always spins forward.
+      if (delta < sliceAngle) delta += 360;
+      return r + 360 * 6 + delta;
+    });
     setTimeout(async () => {
       await play(bet, slices[winIdx]);
       setSpinning(false);
