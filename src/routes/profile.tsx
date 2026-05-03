@@ -91,7 +91,10 @@ function ProfilePage() {
             <Wallet className="w-6 h-6 text-primary-glow" />
             <div>
               <p className="text-xs text-muted-foreground">Total Balance</p>
-              <p className="text-xl font-bold">${(wallet?.balance ?? 0).toFixed(2)}</p>
+              <p className="text-xl font-bold">${((wallet?.balance ?? 0) + (wallet?.bonus_balance ?? 0)).toFixed(2)}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                ${(wallet?.balance ?? 0).toFixed(2)} deposit · ${(wallet?.bonus_balance ?? 0).toFixed(2)} bonus
+              </p>
             </div>
           </div>
           <ChevronRight className="w-5 h-5 text-muted-foreground" />

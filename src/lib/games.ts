@@ -9,13 +9,13 @@ export type Prize = {
 };
 
 export const STANDARD_PRIZES: Prize[] = [
-  { label: "1X",  kind: "multiplier", value: 1,  color: "#ec4899" },
+  { label: "0X",  kind: "multiplier", value: 0,  color: "#475569" },
   { label: "2X",  kind: "multiplier", value: 2,  color: "#a855f7" },
-  { label: "4X",  kind: "multiplier", value: 4,  color: "#10b981" },
+  { label: "0X",  kind: "multiplier", value: 0,  color: "#334155" },
   { label: "8X",  kind: "multiplier", value: 8,  color: "#3b82f6" },
-  { label: "10X", kind: "multiplier", value: 10, color: "#f59e0b" },
+  { label: "0X",  kind: "multiplier", value: 0,  color: "#1e293b" },
   { label: "15X", kind: "multiplier", value: 15, color: "#22c55e" },
-  { label: "20X", kind: "multiplier", value: 20, color: "#ef4444" },
+  { label: "0X",  kind: "multiplier", value: 0,  color: "#374151" },
   { label: "50X", kind: "multiplier", value: 50, color: "#eab308" },
 ];
 
@@ -54,19 +54,13 @@ export const fmtCurrency = (usdt: number, code: CurrencyCode) => {
 
 export const COINS_PER_USDT = 100;
 
-const PRIZE_WEIGHTS: Record<string, number> = {
-  "1X":  35,
-  "2X":  28,
-  "4X":  16,
-  "8X":  10,
-  "10X": 5,
-  "15X": 3,
-  "20X": 2,
-  "50X": 1,
-};
+// Index-based weights matching STANDARD_PRIZES order:
+// 0X(22) · 2X(18) · 0X(22) · 8X(7) · 0X(20) · 15X(5) · 0X(4) · 50X(2)
+// Total 0X = 68 %, 2X = 18 % → 86 % chance of low/no reward.
+const PRIZE_WEIGHTS: number[] = [22, 18, 22, 7, 20, 5, 4, 2];
 
 export function pickWeightedPrizeIndex(prizes: Prize[] = STANDARD_PRIZES): number {
-  const weighted = prizes.map((p) => PRIZE_WEIGHTS[p.label] ?? 0);
+  const weighted = prizes.map((_, i) => PRIZE_WEIGHTS[i] ?? 0);
   const total = weighted.reduce((s, w) => s + Math.max(0, w), 0);
   if (total <= 0) return 0;
   let roll = Math.random() * total;
