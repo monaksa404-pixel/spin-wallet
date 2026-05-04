@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Wallet as WalletIcon, Gift, ArrowDownToLine, ArrowUpFromLine, Sparkles, Coins } from "lucide-react";
+import { Wallet as WalletIcon, Gift, ArrowDownToLine, ArrowUpFromLine, Sparkles, Coins, AlarmClock } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { PageHeader } from "@/components/PageHeader";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,14 +17,27 @@ export const Route = createFileRoute("/wallet")({
 
 type Tx = { id: string; kind: string; amount: number; description: string | null; created_at: string };
 
-const iconFor = (kind: string) => kind === "deposit" ? ArrowDownToLine : kind === "withdrawal" ? ArrowUpFromLine : Sparkles;
+function txKindLabel(kind: string) {
+  if (kind === "balance_expiry") return "Balance expired";
+  if (kind === "bonus") return "Bonus";
+  return kind;
+}
+
+const iconFor = (kind: string) =>
+  kind === "deposit"
+    ? ArrowDownToLine
+    : kind === "withdrawal"
+      ? ArrowUpFromLine
+      : kind === "balance_expiry"
+        ? AlarmClock
+        : Sparkles;
 
 function WalletPage() {
   const { user } = useAuth();
   const { wallet } = useWallet(user?.id);
   const { currency } = useCurrency();
   const [txs, setTxs] = useState<Tx[]>([]);
-  const [filter, setFilter] = useState<"All" | "deposit" | "spin" | "withdrawal">("All");
+  const [filter, setFilter] = useState<"All" | "deposit" | "spin" | "withdrawal" | "balance_expiry">("All");
 
   useEffect(() => {
     if (!user) return;
@@ -50,8 +63,8 @@ function WalletPage() {
           <div className="bg-gradient-card border border-border rounded-2xl p-4">
             <WalletIcon className="w-6 h-6 text-primary-glow mb-2" />
             <p className="text-xs text-muted-foreground">Total Balance</p>
-            <p className="text-2xl font-bold">{fmtCurrency(wallet?.balance ?? 0, currency)}</p>
-            <p className="text-[10px] text-muted-foreground mt-1">${(wallet?.balance ?? 0).toFixed(2)} USDT</p>
+            <p className="text-2xl font-bold">{fmtCurrency((wallet?.balance ?? 0) + (wallet?.bonus_balance ?? 0), currency)}</p>
+            <p className="text-[10px] text-muted-foreground mt-1">${((wallet?.balance ?? 0) + (wallet?.bonus_balance ?? 0)).toFixed(2)} USDT</p>
           </div>
           <div className="bg-gradient-card border border-border rounded-2xl p-4">
             <Gift className="w-6 h-6 text-primary-glow mb-2" />
@@ -71,10 +84,15 @@ function WalletPage() {
           </div>
         </div>
 
-        <div className="bg-card rounded-xl p-1 grid grid-cols-4 gap-1">
-          {(["All", "deposit", "spin", "withdrawal"] as const).map((f) => (
-            <button key={f} onClick={() => setFilter(f)} className={`py-2 rounded-lg text-xs font-semibold capitalize transition ${filter === f ? "bg-gradient-primary shadow-glow" : "text-muted-foreground"}`}>
-              {f}
+        <div className="bg-card rounded-xl p-1 flex flex-wrap gap-1">
+          {(["All", "deposit", "spin", "withdrawal", "balance_expiry"] as const).map((f) => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => setFilter(f)}
+              className={`flex-1 min-w-[4.5rem] py-2 rounded-lg text-[11px] font-semibold capitalize transition ${filter === f ? "bg-gradient-primary shadow-glow" : "text-muted-foreground"}`}
+            >
+              {f === "balance_expiry" ? "Expiry" : f}
             </button>
           ))}
         </div>
@@ -90,7 +108,7 @@ function WalletPage() {
                   <Icon className="w-5 h-5 text-primary-glow" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold capitalize">{t.kind}</p>
+                  <p className="text-sm font-semibold capitalize">{txKindLabel(t.kind)}</p>
                   <p className="text-xs text-muted-foreground truncate">{t.description ?? new Date(t.created_at).toLocaleString()}</p>
                 </div>
                 <div className="text-right">

@@ -49,11 +49,6 @@ export function useWallet(userId: string | null | undefined) {
     ? (wallet!.balance_deadline_at as string)
     : null;
 
-  /**
-   * Lightweight read — just fetches wallet + pending-deposit flag.
-   * Does NOT call wallet_apply_balance_expiry (which can zero balances).
-   * The expiry check is only done once on initial mount.
-   */
   const refreshWallet = useCallback(async () => {
     if (!userId) return;
 
@@ -62,8 +57,18 @@ export function useWallet(userId: string | null | undefined) {
       supabase.from("deposits").select("id").eq("user_id", userId).eq("status", "pending").limit(1),
     ]);
 
-    const row = coerceWalletNumeric(walletRes.data as Wallet | null);
+    let row = coerceWalletNumeric(walletRes.data as Wallet | null);
     const pending = !pendingRes.error && (pendingRes.data?.length ?? 0) > 0;
+
+    const dl = row?.balance_deadline_at;
+    if (dl) {
+      const end = new Date(dl).getTime();
+      if (Number.isFinite(end) && end <= Date.now()) {
+        await supabase.rpc("wallet_apply_balance_expiry");
+        const again = await supabase.from("wallets").select("*").eq("user_id", userId).maybeSingle();
+        row = coerceWalletNumeric(again.data as Wallet | null);
+      }
+    }
 
     setWallet(row);
     setHasPendingDeposit(pending);
@@ -142,6 +147,17 @@ export function useWallet(userId: string | null | undefined) {
     if (Number.isNaN(end) || end <= Date.now()) return;
     const id = window.setInterval(() => void refreshWallet(), 15_000);
     return () => window.clearInterval(id);
+  }, [userId, depositDeadlineAt, refreshWallet]);
+
+  useEffect(() => {
+    if (!userId || !depositDeadlineAt) return;
+    const end = new Date(depositDeadlineAt).getTime();
+    const ms = end - Date.now();
+    if (Number.isNaN(end) || ms <= 0) return;
+    const id = window.setTimeout(() => {
+      void supabase.rpc("wallet_apply_balance_expiry").finally(() => void refreshWallet());
+    }, ms + 600);
+    return () => window.clearTimeout(id);
   }, [userId, depositDeadlineAt, refreshWallet]);
 
   return { wallet, loading, refreshWallet, depositDeadlineAt, hasPendingDeposit };
