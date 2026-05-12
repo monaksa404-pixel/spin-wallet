@@ -33,7 +33,7 @@ function BankWithdraw() {
     setForm({ ...form, [k]: e.target.value });
 
   const amtNum = Number(form.amount);
-  const bal = wallet?.balance ?? 0;
+  const bal = (wallet?.balance ?? 0) + (wallet?.bonus_balance ?? 0);
 
   const validateStep1 = () => {
     if (!amtNum || amtNum < MIN) {

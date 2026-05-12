@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Wallet as WalletIcon, Gift, ArrowDownToLine, ArrowUpFromLine, Sparkles, Coins, AlarmClock } from "lucide-react";
+import { Wallet as WalletIcon, Gift, ArrowDownToLine, ArrowUpFromLine, Sparkles, Coins, AlarmClock, CircleAlert } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { PageHeader } from "@/components/PageHeader";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,22 +15,59 @@ export const Route = createFileRoute("/wallet")({
   component: WalletPage,
 });
 
-type Tx = { id: string; kind: string; amount: number; description: string | null; created_at: string };
+type Tx = {
+  id: string;
+  kind: string;
+  amount: number;
+  description: string | null;
+  created_at: string;
+  withdrawal_status?: string | null;
+  deposit_status?: string | null;
+  failure_reason?: string | null;
+};
 
-function txKindLabel(kind: string) {
-  if (kind === "balance_expiry") return "Balance expired";
-  if (kind === "bonus") return "Bonus";
-  return kind;
+function txKindLabel(t: Tx) {
+  if (t.kind === "balance_expiry") return "Balance expired";
+  if (t.kind === "bonus") return "Bonus";
+  if (t.kind === "withdrawal" && t.withdrawal_status) {
+    if (t.withdrawal_status === "approved") return "Withdrawal · Approved";
+    if (t.withdrawal_status === "rejected") return "Withdrawal · Failed";
+    if (t.withdrawal_status === "pending") return "Withdrawal · Pending";
+  }
+  if (t.kind === "deposit" && t.deposit_status) {
+    if (t.deposit_status === "approved") return "Deposit · Approved";
+    if (t.deposit_status === "rejected") return "Deposit · Failed";
+    if (t.deposit_status === "pending") return "Deposit · Pending";
+  }
+  return t.kind;
 }
 
-const iconFor = (kind: string) =>
-  kind === "deposit"
-    ? ArrowDownToLine
-    : kind === "withdrawal"
-      ? ArrowUpFromLine
-      : kind === "balance_expiry"
-        ? AlarmClock
-        : Sparkles;
+const iconFor = (t: Tx) => {
+  if (t.kind === "deposit") {
+    if (t.deposit_status === "rejected") return CircleAlert;
+    return ArrowDownToLine;
+  }
+  if (t.kind === "withdrawal") {
+    if (t.withdrawal_status === "rejected") return CircleAlert;
+    return ArrowUpFromLine;
+  }
+  if (t.kind === "balance_expiry") return AlarmClock;
+  return Sparkles;
+};
+
+function rowStatusAccent(t: Tx): "success" | "destructive" | "warning" | null {
+  if (t.kind === "withdrawal" && t.withdrawal_status) {
+    if (t.withdrawal_status === "approved") return "success";
+    if (t.withdrawal_status === "rejected") return "destructive";
+    if (t.withdrawal_status === "pending") return "warning";
+  }
+  if (t.kind === "deposit" && t.deposit_status) {
+    if (t.deposit_status === "approved") return "success";
+    if (t.deposit_status === "rejected") return "destructive";
+    if (t.deposit_status === "pending") return "warning";
+  }
+  return null;
+}
 
 function WalletPage() {
   const { user } = useAuth();
@@ -100,19 +137,44 @@ function WalletPage() {
         <div className="bg-card border border-border rounded-2xl divide-y divide-border">
           {filtered.length === 0 && <p className="text-center text-xs text-muted-foreground py-8">No transactions yet</p>}
           {filtered.map((t) => {
-            const Icon = iconFor(t.kind);
+            const Icon = iconFor(t);
+            const accent = rowStatusAccent(t);
             const positive = t.amount >= 0;
+            const amountClass = accent
+              ? accent === "success"
+                ? "text-emerald-400"
+                : accent === "destructive"
+                  ? "text-red-400"
+                  : "text-amber-400"
+              : positive
+                ? "text-success"
+                : "text-destructive";
+            const ringClass = accent
+              ? accent === "success"
+                ? "border border-emerald-500/30 bg-emerald-500/10"
+                : accent === "destructive"
+                  ? "border border-red-500/30 bg-red-500/10"
+                  : "border border-amber-500/30 bg-amber-500/10"
+              : "bg-primary/15";
             return (
-              <div key={t.id} className="flex items-center gap-3 p-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
-                  <Icon className="w-5 h-5 text-primary-glow" />
+              <div key={t.id} className="flex items-start gap-3 p-3">
+                <div className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${ringClass}`}>
+                  <Icon className={`h-5 w-5 ${accent === "success" ? "text-emerald-300" : accent === "destructive" ? "text-red-300" : accent === "warning" ? "text-amber-300" : "text-primary-glow"}`} />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold capitalize">{txKindLabel(t.kind)}</p>
-                  <p className="text-xs text-muted-foreground truncate">{t.description ?? new Date(t.created_at).toLocaleString()}</p>
+                <div className="min-w-0 flex-1">
+                  <p className={`text-sm font-semibold ${accent === "success" ? "text-emerald-200" : accent === "destructive" ? "text-red-200" : accent === "warning" ? "text-amber-200" : ""}`}>
+                    {txKindLabel(t)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{t.description ?? new Date(t.created_at).toLocaleString()}</p>
+                  {((t.kind === "withdrawal" && t.withdrawal_status === "rejected") || (t.kind === "deposit" && t.deposit_status === "rejected")) &&
+                    t.failure_reason && (
+                    <p className="mt-1.5 text-[11px] font-medium text-red-300/95 leading-snug border-l-2 border-red-500/50 pl-2">{t.failure_reason}</p>
+                  )}
                 </div>
-                <div className="text-right">
-                  <p className={`text-sm font-bold ${positive ? "text-success" : "text-destructive"}`}>{positive ? "+" : ""}${t.amount.toFixed(2)}</p>
+                <div className="shrink-0 text-right pt-0.5">
+                  <p className={`text-sm font-bold tabular-nums ${amountClass}`}>
+                    {positive ? "+" : ""}${t.amount.toFixed(2)}
+                  </p>
                 </div>
               </div>
             );

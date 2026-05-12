@@ -17,7 +17,7 @@ function LuckWheel() {
   const { user } = useAuth();
   const { wallet } = useWallet(user?.id);
   const { play, busy } = useGamePlay("luck_wheel");
-  const { bet, setBet } = useBet(10);
+  const { bet, setBet } = useBet(500);
   const [rotation, setRotation] = useState(0);
   const [spinning, setSpinning] = useState(false);
 
@@ -83,7 +83,7 @@ function LuckWheel() {
           </button>
         </div>
 
-        <BetSelector value={bet} onChange={setBet} />
+        <BetSelector value={bet} onChange={setBet} options={[500, 1000, 2500, 5000]} />
 
         <button onClick={spin} disabled={spinning || busy || (wallet?.coins ?? 0) < bet} className="w-full bg-gradient-primary py-4 rounded-xl font-semibold shadow-glow disabled:opacity-50">
           {spinning ? "Spinning..." : `Spin Now (${bet} coins)`}

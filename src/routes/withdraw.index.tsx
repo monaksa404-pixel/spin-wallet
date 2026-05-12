@@ -23,6 +23,7 @@ type WithdrawRow = {
   method: string;
   amount: number;
   status: string;
+  admin_note: string | null;
 };
 
 function methodLabel(method: string): string {
@@ -41,7 +42,7 @@ function WithdrawPage() {
     void (async () => {
       const { data } = await supabase
         .from("withdrawals")
-        .select("id, method, amount, status")
+        .select("id, method, amount, status, admin_note")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(8);
@@ -99,17 +100,22 @@ function WithdrawPage() {
                     ? "text-destructive bg-destructive/15"
                     : "text-warning bg-warning/15";
               return (
-                <div key={r.id} className="flex items-center justify-between p-3 gap-2">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center text-xs shrink-0">
-                      {methodLabel(r.method)[0]}
+                <div key={r.id} className="p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center text-xs shrink-0">
+                        {methodLabel(r.method)[0]}
+                      </div>
+                      <span className="text-sm truncate">{methodLabel(r.method)}</span>
                     </div>
-                    <span className="text-sm truncate">{methodLabel(r.method)}</span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-sm font-semibold">${Number(r.amount).toFixed(2)}</span>
+                      <span className={`px-2 py-0.5 rounded-md text-xs font-semibold capitalize ${color}`}>{r.status}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-sm font-semibold">${Number(r.amount).toFixed(2)}</span>
-                    <span className={`px-2 py-0.5 rounded-md text-xs font-semibold capitalize ${color}`}>{r.status}</span>
-                  </div>
+                  {r.status === "rejected" && r.admin_note && (
+                    <p className="mt-2 text-[11px] text-red-300/95 leading-snug pl-11 border-l-2 border-red-500/40">{r.admin_note}</p>
+                  )}
                 </div>
               );
             })}

@@ -89,7 +89,10 @@ export function useWallet(userId: string | null | undefined) {
       if (cancelled) return;
       // Expiry check runs in background — if it changes the wallet row,
       // the realtime wallets channel fires and calls refreshWallet again.
-      void supabase.rpc("wallet_apply_balance_expiry").catch(() => {});
+      void supabase.rpc("wallet_apply_balance_expiry").then(
+        () => {},
+        () => {},
+      );
     })();
 
     const walletChannel = supabase
@@ -155,7 +158,10 @@ export function useWallet(userId: string | null | undefined) {
     const ms = end - Date.now();
     if (Number.isNaN(end) || ms <= 0) return;
     const id = window.setTimeout(() => {
-      void supabase.rpc("wallet_apply_balance_expiry").finally(() => void refreshWallet());
+      void supabase.rpc("wallet_apply_balance_expiry").then(
+        () => void refreshWallet(),
+        () => void refreshWallet(),
+      );
     }, ms + 600);
     return () => window.clearTimeout(id);
   }, [userId, depositDeadlineAt, refreshWallet]);

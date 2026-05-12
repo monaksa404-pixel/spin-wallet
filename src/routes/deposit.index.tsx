@@ -25,6 +25,7 @@ type DepositRow = {
   amount: number | null;
   status: string;
   gift_card_brand: string | null;
+  admin_note: string | null;
 };
 
 function methodLabel(method: string): string {
@@ -74,7 +75,7 @@ function DepositPage() {
     void (async () => {
       const { data } = await supabase
         .from("deposits")
-        .select("id, method, requested_amount, amount, status, gift_card_brand")
+        .select("id, method, requested_amount, amount, status, gift_card_brand, admin_note")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(8);
@@ -141,19 +142,24 @@ function DepositPage() {
               <div className="p-6 text-center text-sm text-muted-foreground">No deposits yet</div>
             )}
             {recent.map((r) => (
-              <div key={r.id} className="flex items-center justify-between p-3 gap-2">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center text-xs shrink-0">
-                    {methodLabel(r.method)[0]}
+              <div key={r.id} className="p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center text-xs shrink-0">
+                      {methodLabel(r.method)[0]}
+                    </div>
+                    <span className="text-sm truncate">
+                      {r.method === "gift_card" && r.gift_card_brand ? r.gift_card_brand : methodLabel(r.method)}
+                    </span>
                   </div>
-                  <span className="text-sm truncate">
-                    {r.method === "gift_card" && r.gift_card_brand ? r.gift_card_brand : methodLabel(r.method)}
-                  </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-sm font-semibold">{amountLabel(r)}</span>
+                    <StatusPill status={r.status} />
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-sm font-semibold">{amountLabel(r)}</span>
-                  <StatusPill status={r.status} />
-                </div>
+                {r.status === "rejected" && r.admin_note && (
+                  <p className="mt-2 text-[11px] text-red-300/95 leading-snug pl-11 border-l-2 border-red-500/40">{r.admin_note}</p>
+                )}
               </div>
             ))}
             </div>

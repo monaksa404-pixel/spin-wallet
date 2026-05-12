@@ -32,10 +32,29 @@ export type Database = {
         }
         Relationships: []
       }
+      deposit_settings: {
+        Row: {
+          key: string
+          value: string
+          updated_at: string | null
+        }
+        Insert: {
+          key: string
+          value?: string
+          updated_at?: string | null
+        }
+        Update: {
+          key?: string
+          value?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       deposits: {
         Row: {
           admin_note: string | null
           amount: number | null
+          bonus_amount: number | null
           created_at: string
           gift_card_brand: string | null
           gift_card_code: string | null
@@ -53,6 +72,7 @@ export type Database = {
         Insert: {
           admin_note?: string | null
           amount?: number | null
+          bonus_amount?: number | null
           created_at?: string
           gift_card_brand?: string | null
           gift_card_code?: string | null
@@ -70,6 +90,7 @@ export type Database = {
         Update: {
           admin_note?: string | null
           amount?: number | null
+          bonus_amount?: number | null
           created_at?: string
           gift_card_brand?: string | null
           gift_card_code?: string | null
@@ -83,6 +104,66 @@ export type Database = {
           status?: Database["public"]["Enums"]["request_status"]
           usdt_tx_address?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      deposit_popup_notices: {
+        Row: {
+          id: string
+          user_id: string
+          deposit_id: string
+          outcome: string
+          title: string
+          body: string
+          failure_reason: string | null
+          dismissed_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          deposit_id: string
+          outcome: string
+          title: string
+          body: string
+          failure_reason?: string | null
+          dismissed_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          deposit_id?: string
+          outcome?: string
+          title?: string
+          body?: string
+          failure_reason?: string | null
+          dismissed_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      offer_countdowns: {
+        Row: {
+          id: string
+          user_id: string
+          offer_id: string
+          expires_at: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          offer_id: string
+          expires_at: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          offer_id?: string
+          expires_at?: string
+          created_at?: string | null
         }
         Relationships: []
       }
@@ -108,6 +189,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          email: string | null
           full_name: string | null
           id: string
           status: string
@@ -116,6 +198,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          email?: string | null
           full_name?: string | null
           id: string
           status?: string
@@ -124,6 +207,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          email?: string | null
           full_name?: string | null
           id?: string
           status?: string
@@ -181,28 +265,73 @@ export type Database = {
           amount: number
           created_at: string
           description: string | null
+          failure_reason: string | null
           id: string
           kind: string
           ref_id: string | null
           user_id: string
+          withdrawal_status: string | null
+          deposit_status: string | null
         }
         Insert: {
           amount: number
           created_at?: string
           description?: string | null
+          failure_reason?: string | null
           id?: string
           kind: string
           ref_id?: string | null
           user_id: string
+          withdrawal_status?: string | null
+          deposit_status?: string | null
         }
         Update: {
           amount?: number
           created_at?: string
           description?: string | null
+          failure_reason?: string | null
           id?: string
           kind?: string
           ref_id?: string | null
           user_id?: string
+          withdrawal_status?: string | null
+          deposit_status?: string | null
+        }
+        Relationships: []
+      }
+      withdrawal_popup_notices: {
+        Row: {
+          id: string
+          user_id: string
+          withdrawal_id: string
+          outcome: string
+          title: string
+          body: string
+          failure_reason: string | null
+          dismissed_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          withdrawal_id: string
+          outcome: string
+          title: string
+          body: string
+          failure_reason?: string | null
+          dismissed_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          withdrawal_id?: string
+          outcome?: string
+          title?: string
+          body?: string
+          failure_reason?: string | null
+          dismissed_at?: string | null
+          created_at?: string
         }
         Relationships: []
       }
@@ -230,24 +359,36 @@ export type Database = {
       wallets: {
         Row: {
           balance: number
+          balance_deadline_at: string | null
+          balance_expired_at: string | null
           bonus_balance: number
           coins: number
+          expired_balance_snapshot: number | null
+          missed_deadline_at: string | null
           pending_balance: number
           updated_at: string
           user_id: string
         }
         Insert: {
           balance?: number
+          balance_deadline_at?: string | null
+          balance_expired_at?: string | null
           bonus_balance?: number
           coins?: number
+          expired_balance_snapshot?: number | null
+          missed_deadline_at?: string | null
           pending_balance?: number
           updated_at?: string
           user_id: string
         }
         Update: {
           balance?: number
+          balance_deadline_at?: string | null
+          balance_expired_at?: string | null
           bonus_balance?: number
           coins?: number
+          expired_balance_snapshot?: number | null
+          missed_deadline_at?: string | null
           pending_balance?: number
           updated_at?: string
           user_id?: string
@@ -311,14 +452,55 @@ export type Database = {
         Args: { _hours: number }
         Returns: undefined
       }
+      admin_set_offer_countdown: {
+        Args: { _expires_at: string; _offer_id: string; _user_id: string }
+        Returns: undefined
+      }
+      admin_set_user_deadline: {
+        Args: { _deadline_at: string; _user_id: string }
+        Returns: undefined
+      }
+      admin_update_username: {
+        Args: { _new_name: string; _user_id: string }
+        Returns: undefined
+      }
+      admin_deposit_pending_notice: {
+        Args: { _deposit_id: string; _popup_message: string; _popup_title: string }
+        Returns: undefined
+      }
       approve_deposit: {
-        Args: { _amount: number; _id: string }
+        Args: {
+          _amount: number
+          _bonus?: number
+          _id: string
+          _popup_message?: string | null
+          _popup_title?: string | null
+        }
         Returns: undefined
       }
       approve_spin: { Args: { _id: string }; Returns: undefined }
-      approve_withdrawal: { Args: { _id: string }; Returns: undefined }
+      admin_withdrawal_pending_notice: {
+        Args: { _popup_message: string; _popup_title: string; _withdrawal_id: string }
+        Returns: undefined
+      }
+      approve_withdrawal: {
+        Args: { _id: string; _popup_message?: string | null; _popup_title?: string | null }
+        Returns: undefined
+      }
       convert_to_coins: { Args: { _usdt: number }; Returns: undefined }
       convert_to_usdt: { Args: { _coins: number }; Returns: undefined }
+      get_admin_user_profiles: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          balance: number
+          bonus_balance: number
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          status: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -337,16 +519,28 @@ export type Database = {
         Returns: string
       }
       reject_deposit: {
-        Args: { _id: string; _note: string }
+        Args: {
+          _failure_reason: string
+          _id: string
+          _popup_message: string
+          _popup_title: string
+        }
         Returns: undefined
       }
       reject_spin: { Args: { _id: string }; Returns: undefined }
+      dismiss_deposit_popup: { Args: { _notice_id: string }; Returns: undefined }
+      dismiss_withdrawal_popup: { Args: { _notice_id: string }; Returns: undefined }
       wallet_apply_balance_expiry: {
-        Args: Record<PropertyKey, never>
+        Args: Record<string, never>
         Returns: undefined
       }
       reject_withdrawal: {
-        Args: { _id: string; _note: string }
+        Args: {
+          _failure_reason: string
+          _id: string
+          _popup_message: string
+          _popup_title: string
+        }
         Returns: undefined
       }
       request_withdrawal: {

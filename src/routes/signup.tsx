@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Mail, Lock, User, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getEmailConfirmRedirectUrl } from "@/lib/site-url";
+import { formatAuthUserFacingMessage } from "@/lib/auth-errors";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/signup")({
@@ -13,27 +14,35 @@ export const Route = createFileRoute("/signup")({
 function SignupPage() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [busy, setBusy] = useState(false);
+  const submitLock = useRef(false);
   const navigate = useNavigate();
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (busy || submitLock.current) return;
+    submitLock.current = true;
     setBusy(true);
     const redirectTo = getEmailConfirmRedirectUrl();
-    const { error } = await supabase.auth.signUp({
-      email: form.email.trim(),
-      password: form.password,
-      options: {
-        ...(redirectTo ? { emailRedirectTo: redirectTo } : {}),
-        data: { full_name: form.name },
-      },
-    });
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: form.email.trim(),
+        password: form.password,
+        options: {
+          ...(redirectTo ? { emailRedirectTo: redirectTo } : {}),
+          data: { full_name: form.name.trim() },
+        },
+      });
+      if (error) {
+        toast.error(formatAuthUserFacingMessage(error));
+        return;
+      }
+      const sessionMissing = !data.session;
+      toast.success(sessionMissing ? "Check your email to confirm your account, then sign in." : "Account created!");
+      navigate({ to: "/" });
+    } finally {
+      submitLock.current = false;
+      setBusy(false);
     }
-    toast.success("Account created!");
-    navigate({ to: "/" });
   };
 
   const update = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [k]: e.target.value });

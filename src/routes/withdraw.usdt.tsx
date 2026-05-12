@@ -29,7 +29,7 @@ function WithdrawUsdt() {
   }, [loading, user, navigate]);
 
   const amtNum = Number(amount);
-  const bal = wallet?.balance ?? 0;
+  const bal = (wallet?.balance ?? 0) + (wallet?.bonus_balance ?? 0);
 
   const validateStep1 = () => {
     if (!amtNum || amtNum < MIN) {

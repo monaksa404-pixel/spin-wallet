@@ -54,10 +54,9 @@ export const fmtCurrency = (usdt: number, code: CurrencyCode) => {
 
 export const COINS_PER_USDT = 100;
 
-// Index-based weights matching STANDARD_PRIZES order:
-// 0X(22) · 2X(18) · 0X(22) · 8X(7) · 0X(20) · 15X(5) · 0X(4) · 50X(2)
-// Total 0X = 68 %, 2X = 18 % → 86 % chance of low/no reward.
-const PRIZE_WEIGHTS: number[] = [22, 18, 22, 7, 20, 5, 4, 2];
+// Index-based weights matching STANDARD_PRIZES order (same order as slices).
+// ~86% 0X, ~9% 2X, ~5% combined 8X / 15X / 50X (big wins).
+const PRIZE_WEIGHTS: number[] = [430, 180, 430, 40, 430, 35, 430, 25];
 
 export function pickWeightedPrizeIndex(prizes: Prize[] = STANDARD_PRIZES): number {
   const weighted = prizes.map((_, i) => PRIZE_WEIGHTS[i] ?? 0);
